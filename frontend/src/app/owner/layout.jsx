@@ -1,98 +1,122 @@
 'use client'
+
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
+
+const navItems = [
+  { href: '/owner/dashboard', label: 'Tổng quan', short: 'TQ' },
+  { href: '/owner/houses', label: 'Danh sách nhà', short: 'Nhà' },
+  { href: '/owner/rooms', label: 'Danh sách phòng', short: 'P' },
+  { href: '/owner/tenants', label: 'Danh sách người thuê', short: 'NT' },
+  { href: '/owner/tenant-contracts', label: 'Danh sách hợp đồng', short: 'HĐ' }, // Link này khớp với file page.js bạn đã tạo
+  { href: '/owner/invoices', label: 'Danh sách hóa đơn', short: 'HD' },
+  { href: '/owner/tickets', label: 'Danh sách yêu cầu sửa chữa', short: 'SC' },
+  { href: '/owner/notification', label: 'Thông báo', short: 'TB' },
+  { href: '/owner/profile', label: 'Thông tin cá nhân', short: 'CN' },
+]
 
 export default function OwnerLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const pathname = usePathname()
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/*SIDEBAR*/}
-      <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-gray-800 text-white transition-all duration-300 flex flex-col`}>
-        <div className="p-4 border-b border-gray-700 font-bold text-center">
+      {/* SIDEBAR */}
+      <aside
+        className={`${
+          isSidebarOpen ? 'w-64' : 'w-20'
+        } bg-gray-800 text-white transition-all duration-300 flex flex-col`}
+      >
+        <div className="p-4 border-b border-gray-700 font-bold text-center text-sm">
           {isSidebarOpen ? 'Trang của bạn' : 'Chủ trọ'}
         </div>
 
-        <nav className="flex-1 p-4 space-y-2">
-          <Link href="/owner/dashboard" className="block p-2 hover:bg-gray-700 rounded">
-            {isSidebarOpen && 'Tổng quan'}
-          </Link>
+        <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+          {navItems.map((item) => {
+            const isActive =
+              pathname === item.href || pathname.startsWith(item.href + '/')
 
-          <Link href="/owner/houses" className="block p-2 hover:bg-gray-700 rounded">
-            {isSidebarOpen && 'Danh sách nhà'}
-          </Link>
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 rounded px-2 py-2 text-sm transition-colors
+                  ${
+                    isActive
+                      ? 'bg-gray-100 text-gray-900'
+                      : 'hover:bg-gray-700/80'
+                  }`}
+              >
+                {/* icon / chữ viết tắt khi thu gọn */}
+                <span
+                  className={`flex h-8 w-8 min-w-[2rem] items-center justify-center rounded-full text-xs font-semibold border
+                    ${
+                      isActive
+                        ? 'bg-white text-gray-900 border-transparent'
+                        : 'bg-gray-700 text-gray-200 border-gray-600'
+                    }`}
+                >
+                  {item.short ?? item.label.charAt(0)}
+                </span>
 
-          <Link href="/owner/rooms" className="block p-2 hover:bg-gray-700 rounded">
-            {isSidebarOpen && 'Danh sách phòng'}
-          </Link>
-
-          <Link href="/owner/tenants" className="block p-2 hover:bg-gray-700 rounded">
-            {isSidebarOpen && 'Danh sách người thuê'}
-          </Link>
-
-          <Link href="/owner/contracts" className="block p-2 hover:bg-gray-700 rounded">
-            {isSidebarOpen && 'Danh sách hợp đồng'}
-          </Link>
-
-          <Link href="/owner/invoices" className="block p-2 hover:bg-gray-700 rounded">
-            {isSidebarOpen && 'Danh sách hóa đơn'}
-          </Link>
-
-          <Link href="/owner/tickets" className="block p-2 hover:bg-gray-700 rounded">
-            {isSidebarOpen && 'Danh sách yêu cầu sữa chữa'}
-          </Link>
-
-          <Link href="/owner/notification" className="block p-2 hover:bg-gray-700 rounded">
-            {isSidebarOpen && 'Thông báo'}
-          </Link>
-
-          <Link href="/owner/profile" className="block p-2 hover:bg-gray-700 rounded">
-            {isSidebarOpen && 'Thông tin cá nhân'}
-          </Link>
+                {isSidebarOpen && <span className="whitespace-nowrap">{item.label}</span>}
+              </Link>
+            )
+          })}
         </nav>
 
-        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-4 bg-gray-900 text-center hover:bg-gray-700">
-          {isSidebarOpen ? 'Thu gọn' : '>'}
+        <button
+          onClick={() => setIsSidebarOpen((prev) => !prev)}
+          className="p-4 bg-gray-900 text-center hover:bg-gray-700 text-xs font-medium border-t border-gray-700"
+        >
+          {isSidebarOpen ? 'Thu gọn' : 'Mở rộng'}
         </button>
       </aside>
 
-      {/*MAIN CONTENT*/}
+      {/* MAIN CONTENT */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow p-4 flex justify-between items-center">
-          <h1 className="font-bold text-gray-950">Khu vực chủ nhà</h1>
+        <header className="bg-white shadow-sm px-6 py-3 flex justify-between items-center z-10">
+          <h1 className="font-bold text-gray-950 text-sm md:text-base">
+            Khu vực chủ nhà
+          </h1>
           <div className="flex items-center gap-4">
             <button className="relative p-2 hover:bg-gray-100 rounded-full transition-colors flex items-center justify-center">
               <Image
-                src="/bell.svg"
+                src="/bell.svg" // Đảm bảo bạn có file icon này trong public
                 alt="nofi"
                 width={24}
                 height={24}
                 className="w-6 h-6"
+                onError={(e) => { e.target.style.display = 'none' }} // Ẩn nếu lỗi ảnh
               />
+              {/* Fallback icon nếu không có ảnh bell.svg */}
+              <span className="hidden w-6 h-6 text-gray-600">🔔</span>
+              
               <span className="absolute top-1.5 right-2 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
             </button>
-            <div className="h-6 w-px bg-gray-300"></div>
+            <div className="h-6 w-px bg-gray-300" />
             <div className="flex items-center gap-3">
-              <div className="text-right">
-                <p className="text-sm font-bold">Owner</p>
-                <p className="text-xs">Chủ nhà</p>
+              <div className="text-right hidden md:block">
+                <p className="text-sm font-bold leading-tight">Owner</p>
+                <p className="text-xs text-gray-500 leading-tight">Chủ nhà</p>
               </div>
 
               <div className="relative w-10 h-10">
                 <Image
-                  src="/logo.png"
+                  src="/logo.png" // Đảm bảo bạn có file logo này
                   alt="Avatar"
                   fill
-                  className="rounded-full object-cover border"
+                  className="rounded-full object-cover border border-gray-200 bg-gray-200"
                 />
               </div>
             </div>
           </div>
         </header>
 
-        {/* CHILD */}
-        <main className="flex-1 overflow-auto p-6">
+        {/* CHILDREN */}
+        <main className="flex-1 overflow-auto p-4 md:p-6 bg-gray-50 relative">
           {children}
         </main>
       </div>
