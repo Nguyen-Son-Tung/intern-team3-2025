@@ -37,12 +37,24 @@ type CurrentRoom = {
   name: string;
 };
 
+// Raw DTO từ API
+type TicketApiDto = {
+  id?: number;
+  roomId?: number;
+  roomName?: string;
+  title?: string;
+  description?: string;
+  status?: string;
+  createdAt?: string;
+};
+
 const PROPERTY_API_BASE_URL =
   process.env.NEXT_PUBLIC_PROPERTY_API_URL || "http://localhost:5018";
 
 const TENANT_TICKETS_API = `${PROPERTY_API_BASE_URL}/api/v1/ticket/tenant`;
 const TENANT_CREATE_TICKET_API = `${PROPERTY_API_BASE_URL}/api/v1/ticket`;
 
+// Dữ liệu fake fallback
 const FAKE_TICKETS: Ticket[] = [
   {
     id: 1,
@@ -151,36 +163,39 @@ export default function TenantTicketsPage() {
       });
 
       if (!res.ok) {
+        // nếu bị 401 thì redirect về login (nếu bạn dùng /public/login)
+        if (res.status === 401 && typeof window !== "undefined") {
+          window.location.href = "/public/login";
+        }
         throw new Error(
           `Không thể tải danh sách yêu cầu sửa chữa (HTTP ${res.status})`
         );
       }
 
-      const data = (await res.json()) as
-        | {
-            id: number;
-            roomId: number;
-            roomName: string;
-            title: string;
-            description?: string;
-            status: TicketStatus;
-            createdAt: string;
-          }[]
-        | undefined;
+      const data = (await res.json()) as TicketApiDto[] | undefined;
 
       if (!data || !Array.isArray(data)) {
         throw new Error("Dữ liệu trả về không hợp lệ.");
       }
 
-      const mapped: Ticket[] = data.map((item) => ({
-        id: item.id,
-        roomId: item.roomId,
-        roomName: item.roomName,
-        title: item.title,
-        description: item.description,
-        status: item.status,
-        createdAt: item.createdAt,
-      }));
+      const mapped: Ticket[] = data.map((item, index) => {
+        const status =
+          (item.status as TicketStatus) && ["pending", "processing", "done"].includes(
+            item.status as TicketStatus
+          )
+            ? (item.status as TicketStatus)
+            : "pending";
+
+        return {
+          id: item.id ?? index + 1,
+          roomId: item.roomId ?? 0,
+          roomName: item.roomName ?? "Không rõ phòng",
+          title: item.title ?? "",
+          description: item.description ?? "",
+          status,
+          createdAt: item.createdAt ?? new Date().toISOString(),
+        };
+      });
 
       setTickets(mapped);
 
@@ -213,7 +228,6 @@ export default function TenantTicketsPage() {
 
   useEffect(() => {
     fetchTicketsFromApi();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // =============== SUMMARY (TỪ LIST TICKET) ===============
@@ -292,13 +306,17 @@ export default function TenantTicketsPage() {
       });
 
       if (!res.ok) {
+        // xử lý 401 nếu cần
+        if (res.status === 401 && typeof window !== "undefined") {
+          window.location.href = "/public/login";
+        }
         throw new Error(`Không thể tạo yêu cầu (HTTP ${res.status})`);
       }
 
-      // Option: dùng ticket trả về từ backend
-      // const created = (await res.json()) as Ticket;
-      // setTickets((prev) => [created, ...prev]);
-
+      // Nếu backend trả ticket đã tạo, bạn có thể xài:
+      // const created = (await res.json()) as TicketApiDto;
+      // map sang Ticket rồi setTickets((prev) => [mapped, ...prev]);
+      // Ở đây mình gọi lại fetch để sync chắc ăn:
       await fetchTicketsFromApi();
 
       setIsCreateModalOpen(false);
@@ -403,7 +421,7 @@ export default function TenantTicketsPage() {
           {/* SEARCH + FILTER + CREATE BUTTON */}
           <div className="flex flex-col gap-3 lg:w-96">
             <div className="relative">
-              <Search className="absolute left-3.top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -494,7 +512,7 @@ export default function TenantTicketsPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4.py-3 text-xs text-slate-500">
+                      <td className="px-4 py-3 text-xs text-slate-500">
                         {formatDateTime(ticket.createdAt)}
                       </td>
                       <td className="px-4 py-3">

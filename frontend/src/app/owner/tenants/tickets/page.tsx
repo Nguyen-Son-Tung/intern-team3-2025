@@ -33,11 +33,40 @@ type TicketSummary = {
   done: number;
 };
 
+// Dạng dữ liệu summary trả về từ API
+type TicketSummaryApi = {
+  total?: number;
+  pending?: number;
+  processing?: number;
+  done?: number;
+  totalCount?: number;
+  pendingCount?: number;
+  processingCount?: number;
+  doneCount?: number;
+};
+
 const PROPERTY_API_BASE_URL =
   process.env.NEXT_PUBLIC_PROPERTY_API_URL || "http://localhost:5018";
 
+// =========== API ENDPOINTS ===========
 const OWNER_TICKET_SUMMARY_API = `${PROPERTY_API_BASE_URL}/api/v1/ticket/owner/summary`;
+const OWNER_TICKETS_API = `${PROPERTY_API_BASE_URL}/api/v1/ticket/owner/tickets`;
 
+// Kiểu raw từ API (có thể khác 1 chút, mình map lại bên dưới)
+type TicketApiDto = {
+  id?: number;
+  tenantId?: number;
+  tenantName?: string;
+  tenantPhone?: string;
+  roomId?: number;
+  roomName?: string;
+  title?: string;
+  description?: string;
+  status?: string;
+  createdAt?: string;
+};
+
+// Fake fallback khi API lỗi
 const FAKE_TICKETS: Ticket[] = [
   {
     id: 1,
@@ -80,6 +109,7 @@ const FAKE_TICKETS: Ticket[] = [
 function formatDateTime(value?: string | Date | null) {
   if (!value) return "-";
   const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleString("vi-VN", {
     day: "2-digit",
     month: "2-digit",
@@ -114,8 +144,27 @@ function StatusBadge({ status }: { status: TicketStatus }) {
   );
 }
 
+// =========== AUTH HEADER (JWT Bearer cho Owner) ===========
+function getAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+
+  return headers;
+}
+
 export default function OwnerTicketsPage() {
-  const [tickets] = useState<Ticket[]>(FAKE_TICKETS); // tạm
+  // === DANH SÁCH TICKET TỪ API (FALLBACK FAKE) ===
+  const [tickets, setTickets] = useState<Ticket[]>(FAKE_TICKETS);
+
+  // === SUMMARY TỪ API ===
   const [summary, setSummary] = useState<TicketSummary>({
     total: 0,
     pending: 0,
@@ -124,6 +173,10 @@ export default function OwnerTicketsPage() {
   });
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [errorSummary, setErrorSummary] = useState("");
+
+  // === STATE CHO TICKET LIST ===
+  const [loadingTickets, setLoadingTickets] = useState(false);
+  const [errorTickets, setErrorTickets] = useState("");
 
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] =
@@ -142,25 +195,39 @@ export default function OwnerTicketsPage() {
 
         const res = await fetch(OWNER_TICKET_SUMMARY_API, {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include", // nếu auth cookie
+          headers: getAuthHeaders(),
+          credentials: "include",
         });
 
         if (!res.ok) {
+          if (res.status === 401 && typeof window !== "undefined") {
+            window.location.href = "/public/login";
+          }
           throw new Error(
             `Không thể tải thống kê ticket (HTTP ${res.status})`
           );
         }
 
-        const data = await res.json();
+        const json = (await res.json()) as
+          | TicketSummaryApi
+          | (TicketSummaryApi & { data?: TicketSummaryApi })
+          | undefined;
+
+        let raw: TicketSummaryApi = {};
+
+        if (json) {
+          if ("data" in json && json.data) {
+            raw = json.data;
+          } else {
+            raw = json;
+          }
+        }
 
         setSummary({
-          total: data.total ?? 0,
-          pending: data.pending ?? 0,
-          processing: data.processing ?? 0,
-          done: data.done ?? 0,
+          total: raw.total ?? raw.totalCount ?? 0,
+          pending: raw.pending ?? raw.pendingCount ?? 0,
+          processing: raw.processing ?? raw.processingCount ?? 0,
+          done: raw.done ?? raw.doneCount ?? 0,
         });
       } catch (err) {
         console.error(err);
@@ -179,7 +246,98 @@ export default function OwnerTicketsPage() {
     fetchSummary();
   }, []);
 
-  // Filter + search cho fake list
+  // ======================
+  // CALL API DANH SÁCH TICKET OWNER
+  // ======================
+  useEffect(() => {
+    const fetchTickets = async () => {
+      try {
+        setLoadingTickets(true);
+        setErrorTickets("");
+
+        const res = await fetch(OWNER_TICKETS_API, {
+          method: "GET",
+          headers: getAuthHeaders(),
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          if (res.status === 401 && typeof window !== "undefined") {
+            window.location.href = "/public/login";
+          }
+          throw new Error(
+            `Không thể tải danh sách ticket (HTTP ${res.status})`
+          );
+        }
+
+        const json = await res.json();
+
+        // Hỗ trợ nhiều dạng:
+        // 1) [ ... ]
+        // 2) { success: true, data: [ ... ] }
+        // 3) { items: [ ... ] }
+        let arr: unknown = json;
+
+        if (Array.isArray(json)) {
+          arr = json;
+        } else if (Array.isArray(json.data)) {
+          arr = json.data;
+        } else if (Array.isArray(json.items)) {
+          arr = json.items;
+        } else {
+          throw new Error("Dữ liệu ticket không hợp lệ từ API");
+        }
+
+        const apiTickets = arr as TicketApiDto[];
+
+        const mapped: Ticket[] = apiTickets.map((t, index) => {
+          const rawStatus = (t.status || "pending") as string;
+          const validStatuses: TicketStatus[] = [
+            "pending",
+            "processing",
+            "done",
+          ];
+          const normalizedStatus = validStatuses.includes(
+            rawStatus as TicketStatus
+          )
+            ? (rawStatus as TicketStatus)
+            : "pending";
+
+          return {
+            id: t.id ?? index + 1,
+            tenantId: t.tenantId ?? 0,
+            tenantName: t.tenantName ?? "Không rõ tenant",
+            tenantPhone: t.tenantPhone ?? "",
+            roomId: t.roomId ?? 0,
+            roomName: t.roomName ?? "Không rõ phòng",
+            title: t.title ?? "",
+            description: t.description ?? "",
+            status: normalizedStatus,
+            createdAt: t.createdAt ?? new Date().toISOString(),
+          };
+        });
+
+        setTickets(mapped);
+      } catch (err) {
+        console.error("Lỗi load ticket, dùng dữ liệu fake:", err);
+
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Đã xảy ra lỗi khi tải danh sách ticket.";
+
+        setErrorTickets(message);
+        // fallback: dùng FAKE_TICKETS
+        setTickets(FAKE_TICKETS);
+      } finally {
+        setLoadingTickets(false);
+      }
+    };
+
+    fetchTickets();
+  }, []);
+
+  // Filter + search
   const filteredTickets = useMemo(() => {
     let data = [...tickets];
 
@@ -233,6 +391,17 @@ export default function OwnerTicketsPage() {
           <div className="rounded-lg border border-red-100 bg-red-50 px-4 py-2 text-sm text-red-700 flex items-center gap-2">
             <AlertCircle className="h-4 w-4" />
             <span>{errorSummary}</span>
+          </div>
+        )}
+
+        {/* Error tickets */}
+        {errorTickets && (
+          <div className="rounded-lg border border-amber-100 bg-amber-50 px-4 py-2 text-sm text-amber-700 flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            <span>
+              {errorTickets} — Đang hiển thị danh sách ticket mẫu để bạn thử
+              giao diện.
+            </span>
           </div>
         )}
 
@@ -304,88 +473,97 @@ export default function OwnerTicketsPage() {
           </div>
         </div>
 
-        {/* Bảng ticket (fake) */}
+        {/* Bảng ticket */}
         <div className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
-          {filteredTickets.length === 0 ? (
+          {loadingTickets && (
+            <div className="px-6 py-6 text-sm text-slate-500 flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Đang tải danh sách ticket...
+            </div>
+          )}
+
+          {!loadingTickets && filteredTickets.length === 0 ? (
             <div className="px-6 py-10 text-center text-sm text-slate-400">
               <AlertCircle className="mx-auto mb-2 h-6 w-6 text-slate-300" />
               Không có ticket nào.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="bg-slate-50 text-xs font-semibold text-slate-500">
-                  <tr>
-                    <th className="px-4 py-3 text-left">Mã</th>
-                    <th className="px-4 py-3 text-left">Tenant</th>
-                    <th className="px-4 py-3 text-left">Phòng</th>
-                    <th className="px-4 py-3 text-left">Tiêu đề</th>
-                    <th className="px-4 py-3 text-left">Ngày gửi</th>
-                    <th className="px-4 py-3 text-left">Trạng thái</th>
-                    <th className="px-4 py-3 text-right">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredTickets.map((ticket) => (
-                    <tr
-                      key={ticket.id}
-                      className="hover:bg-slate-50/60 transition-colors"
-                    >
-                      <td className="px-4 py-3 text-xs text-slate-500">
-                        #{ticket.id}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col">
-                          <span className="font-medium text-slate-800">
-                            {ticket.tenantName}
-                          </span>
-                          {ticket.tenantPhone && (
-                            <span className="text-xs text-slate-400">
-                              {ticket.tenantPhone}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        {ticket.roomName}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <div className="line-clamp-2">
-                          <span className="font-medium text-slate-800">
-                            {ticket.title}
-                          </span>
-                          {ticket.description && (
-                            <span className="block text-xs text-slate-500 mt-0.5">
-                              {ticket.description}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-slate-500">
-                        {formatDateTime(ticket.createdAt)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={ticket.status} />
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedTicket(ticket)}
-                          className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                        >
-                          Chi tiết
-                        </button>
-                      </td>
+            !loadingTickets && (
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-slate-50 text-xs font-semibold text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Mã</th>
+                      <th className="px-4 py-3 text-left">Tenant</th>
+                      <th className="px-4 py-3 text-left">Phòng</th>
+                      <th className="px-4 py-3 text-left">Tiêu đề</th>
+                      <th className="px-4 py-3 text-left">Ngày gửi</th>
+                      <th className="px-4 py-3 text-left">Trạng thái</th>
+                      <th className="px-4 py-3 text-right">Thao tác</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredTickets.map((ticket) => (
+                      <tr
+                        key={ticket.id}
+                        className="hover:bg-slate-50/60 transition-colors"
+                      >
+                        <td className="px-4 py-3 text-xs text-slate-500">
+                          #{ticket.id}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-col">
+                            <span className="font-medium text-slate-800">
+                              {ticket.tenantName}
+                            </span>
+                            {ticket.tenantPhone && (
+                              <span className="text-xs text-slate-400">
+                                {ticket.tenantPhone}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {ticket.roomName}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="line-clamp-2">
+                            <span className="font-medium text-slate-800">
+                              {ticket.title}
+                            </span>
+                            {ticket.description && (
+                              <span className="block text-xs text-slate-500 mt-0.5">
+                                {ticket.description}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-500">
+                          {formatDateTime(ticket.createdAt)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <StatusBadge status={ticket.status} />
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedTicket(ticket)}
+                            className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                          >
+                            Chi tiết
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
           )}
         </div>
       </div>
 
-      {/* Modal chi tiết ticket (CSS mới, gọn hơn) */}
+      {/* Modal chi tiết ticket */}
       {selectedTicket && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-3">
           <div className="w-full max-w-2xl rounded-2xl bg-white shadow-lg border border-slate-200 overflow-hidden">
@@ -481,7 +659,7 @@ export default function OwnerTicketsPage() {
               >
                 Đóng
               </button>
-              {/* Chỗ này sau này bạn có thể thêm nút Đổi trạng thái, Gán nhân viên... */}
+              {/* Sau này có thể thêm nút Đổi trạng thái / Gán nhân viên xử lý ở đây */}
             </div>
           </div>
         </div>
