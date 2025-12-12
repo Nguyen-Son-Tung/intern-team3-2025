@@ -1,14 +1,29 @@
-using InvoiceService.Models;
+// InvoiceService/Features/Invoice/IInvoiceService.cs
 
+using InvoiceService.Models;
+using InvoiceService.Features.Invoice.DTOs.Invoice; 
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using InvoiceService.Features.Invoice.DTOs; 
 namespace InvoiceService.Features.Invoice;
 
 public interface IInvoiceService
 {
-    Task<IEnumerable<Models.Invoice>> GetAllInvoicesByUserAsync(string userId);
-    Task<Models.Invoice?> GetInvoiceByIdAsync(int id, string userId);
-    Task<Models.Invoice> CreateInvoiceAsync(Models.Invoice invoice);
-    Task<Models.Invoice?> UpdateInvoiceAsync(int id, Models.Invoice invoice, string userId);
-    Task<bool> DeleteInvoiceAsync(int id, string userId);
-    Task<Models.Invoice?> MarkInvoiceAsPaidAsync(int id, string userId);
-    Task<IEnumerable<Models.Invoice>> GetInvoicesByStatusAsync(string userId, string status);
+// Các hàm cũ
+    Task<IEnumerable<InvoiceResponse>> GetAllInvoicesByUserAsync(string userId);
+    Task<IEnumerable<InvoiceResponse>> GetAllInvoicesByOwnerAsync(string ownerId, List<string> tenantUserIds);
+    Task<InvoiceResponse?> GetInvoiceByIdAsync(int id, string userId);
+    Task<InvoiceResponse?> GetInvoiceByIdAsync(int id); 
+    Task<Models.Invoice> CreateInvoiceAsync(Models.Invoice invoice);
+    Task<Models.Invoice?> UpdateInvoiceAsync(int id, Models.Invoice invoice, string userId);
+    Task<bool> DeleteInvoiceAsync(int id, string userId);
+    Task<Models.Invoice?> MarkInvoiceAsPaidAsync(int id, string userId);
+    Task<Models.Invoice?> MarkInvoiceAsPaidAsync(int id);
+    Task<IEnumerable<InvoiceResponse>> GetInvoicesByStatusAsync(string userId, string status);
+    Task<IEnumerable<InvoiceResponse>> GetInvoicesByStatusForOwnerAsync(string ownerId, List<string> tenantUserIds, string status);
+   
+    // ⭐ CÁC HÀM MỚI (Cần đảm bảo DTOs này được giải quyết bằng using đã chọn)
+    Task<UnpaidInvoicesResponseDto> GetUnpaidInvoicesByTenantIdAsync(Guid tenantId);
+    Task<TotalPaidLastMonthDto> GetTotalPaidAmountLastMonthAsync(Guid tenantId);
 }

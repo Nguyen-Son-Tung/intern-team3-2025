@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using PropertyService.Data;
+using PropertyService;
 
 #nullable disable
 
@@ -21,6 +21,48 @@ namespace PropertyService.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
+
+            modelBuilder.Entity("PropertyService.Models.Contract", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("RentPrice")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TenantName")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoomId");
+
+                    b.ToTable("Contracts");
+                });
 
             modelBuilder.Entity("PropertyService.Models.House", b =>
                 {
@@ -41,8 +83,8 @@ namespace PropertyService.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("OwnerId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("char(36)");
 
                     b.HasKey("Id");
 
@@ -56,9 +98,6 @@ namespace PropertyService.Migrations
                         .HasColumnType("int");
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("Floor")
                         .HasColumnType("int");
@@ -79,6 +118,17 @@ namespace PropertyService.Migrations
                     b.HasIndex("HouseId");
 
                     b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("PropertyService.Models.Contract", b =>
+                {
+                    b.HasOne("PropertyService.Models.Room", "Room")
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Room");
                 });
 
             modelBuilder.Entity("PropertyService.Models.Room", b =>

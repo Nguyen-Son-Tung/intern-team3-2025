@@ -2,7 +2,7 @@
 using PropertyService.Models;
 using PropertyService.Models.Enums;
 
-namespace PropertyService.Data;
+namespace PropertyService;
 
 public class ApplicationDbContext : DbContext
 {
@@ -13,10 +13,11 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<House> Houses => Set<House>();
     public DbSet<Room> Rooms => Set<Room>();
+    public DbSet<Contract> Contracts => Set<Contract>();  // ✅ Chỉ còn Contracts, KHÔNG còn TenantContract
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Enum → string mapping
+        // Enum → string mapping cho Room.Status
         modelBuilder.Entity<Room>()
             .Property(r => r.Status)
             .HasConversion<string>();
@@ -27,6 +28,11 @@ public class ApplicationDbContext : DbContext
             .WithOne(r => r.House)
             .HasForeignKey(r => r.HouseId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Enum → string mapping cho Contract.Status
+        modelBuilder.Entity<Contract>()
+            .Property(c => c.Status)
+            .HasConversion<string>();
 
         base.OnModelCreating(modelBuilder);
     }

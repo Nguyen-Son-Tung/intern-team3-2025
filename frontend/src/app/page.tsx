@@ -8,7 +8,6 @@ export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Dùng globalThis.window cho SonarLint + tránh lỗi SSR
     if (typeof globalThis.window === "undefined") return;
 
     const token = globalThis.window.localStorage.getItem("accessToken");

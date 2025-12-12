@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -31,8 +31,20 @@ interface OwnerLayoutProps {
 
 export default function OwnerLayout({ children }: OwnerLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [userFullName, setUserFullName] = useState<string>('Owner');
+
   const pathname = usePathname();
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const name = localStorage.getItem('userFullName');
+    if (name && name.trim().length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUserFullName(name);
+    }
+  }, []);
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
@@ -40,11 +52,6 @@ export default function OwnerLayout({ children }: OwnerLayoutProps) {
     }
     router.push('/public/login');
   };
-
-  const userFullName =
-    typeof window !== 'undefined'
-      ? localStorage.getItem('userFullName') || 'Owner'
-      : 'Owner';
 
   return (
     <RoleGuard allowedRoles={['Owner']}>
