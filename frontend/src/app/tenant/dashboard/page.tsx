@@ -45,6 +45,125 @@ const TenantDashboardPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
+<<<<<<< HEAD
+=======
+// Định nghĩa Props cho Component InvoiceCard
+interface InvoiceCardProps {
+    invoice: Invoice
+    setInvoice: (invoice: Invoice | null) => void
+}
+
+interface ApproveReadingPayload {
+    electric: ReadingValue
+    water: ReadingValue
+}
+
+interface ReadingValue {
+    old: number
+    new: number
+    img: string
+    status: string
+}
+
+interface InvoiceData {
+    electricQty: number
+    waterQty: number
+}
+
+interface ReadingCycle {
+    month: number
+    year: number
+    deadline: string
+}
+
+/* ============================================
+   FAKE API
+=============================================== */
+const FakeAPI = {
+    getCurrentReadingCycle: async () => {
+        return {
+            month: 1,
+            year: 2024,
+            deadline: "2024-01-25"
+        }
+    },
+
+    uploadImage: async (type: "electric" | "water", file: File) => {
+        const formData = new FormData()
+        formData.append("file", file)
+
+        // GỌI ĐÚNG VÀO BACKEND THẬT
+        const url = `http://localhost:5000/api/${type}/upload`
+
+        const res = await fetch(url, {
+            method: "POST",
+            body: formData
+        })
+
+        const data = await res.json()
+
+        if (!res.ok || data.success === false) {
+            console.error(`Upload ${type} lỗi:`, data.error)
+            throw new Error(data.error || "Upload thất bại")
+        }
+
+        // Convert ảnh local để hiển thị
+        const imageUrl = URL.createObjectURL(file)
+
+        return {
+            imageUrl,
+            aiValue: Number(data.reading)
+        }
+    },
+
+    createInvoice: async (data: InvoiceData) => {
+        await new Promise(r => setTimeout(r, 500))
+        return {
+            id: "inv_fake_001",
+            month: "2024-01",
+            status: "unpaid",
+            items: [
+                { name: "Tiền điện", qty: data.electricQty, price: 3500 },
+                { name: "Tiền nước", qty: data.waterQty, price: 7000 }
+            ]
+        }
+    },
+
+    payInvoice: async () => {
+        await new Promise(r => setTimeout(r, 500))
+        return { status: "paid" }
+    },
+
+    approveReading: async (payload: ApproveReadingPayload) => {
+        await new Promise(r => setTimeout(r, 500))
+        return { success: true }
+    }
+}
+
+/* ============================================
+   MAIN COMPONENT
+=============================================== */
+export default function TenantDashboard() {
+    const [cycle, setCycle] = useState<ReadingCycle | null>(null)
+    const [uploadingElec, setUploadingElec] = useState(false)
+    const [uploadingWater, setUploadingWater] = useState(false)
+    const [electric, setElectric] = useState<ReadingValue>({
+        old: 18050,
+        new: 0,
+        img: "",
+        status: "pending"
+    })
+
+    const [water, setWater] = useState<ReadingValue>({
+        old: 1850,
+        new: 0,
+        img: "",
+        status: "pending"
+    })
+
+    const [invoice, setInvoice] = useState<Invoice | null>(null)
+    /* LOAD KỲ THU */
+>>>>>>> b43a51d (Thay đường dẫn API_URL)
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
@@ -128,6 +247,82 @@ const TenantDashboardPage: React.FC = () => {
                     value={data.contractStatus}
                     apiEndpoint="/api/tenant/contracts/active-info"
                 />
+<<<<<<< HEAD
+=======
+                <div className="relative w-full h-[400px] border border-gray-200 bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center">
+                    {isLoading ? (
+                        <span className="animate-pulse text-blue-600 font-medium">
+                            ⏳ Đang xử lý ảnh...
+                        </span>
+                    ) : imageUrl ? (
+                        <Image
+                            src={imageUrl}
+                            alt="meter"
+                            fill
+                            className="object-contain p-2"
+                        />
+                    ) : (
+                        <span className="opacity-60 text-gray-700">
+                            Chọn ảnh công tơ
+                        </span>
+                    )}
+                </div>
+
+            </label>
+
+            <div className="mt-4 text-sm text-gray-700 space-y-1">
+                <p>Chỉ số tháng trước: <b>{oldValue}</b></p>
+                <p>Chỉ số tháng này (AI): <b>{newValue}</b></p>
+
+                <p className="mt-1">
+                    Trạng thái:{" "}
+                    {status === "pending" ? (
+                        <span className="text-yellow-600 font-semibold">Chờ xác nhận</span>
+                    ) : (
+                        <span className="text-green-600 font-semibold">Đã duyệt</span>
+                    )}
+                </p>
+            </div>
+        </div>
+    )
+}
+
+/* ============================================
+   COMPONENT: INVOICE
+=============================================== */
+function InvoiceCard({ invoice, setInvoice }: InvoiceCardProps) {
+    const [showQR, setShowQR] = useState(false)
+    const [paymentStatus, setPaymentStatus] = useState<"pending" | "success">("pending")
+    const handlePay = async () => {
+        const res = await FakeAPI.payInvoice()
+
+        // trạng thái trong modal
+        //setPaymentStatus("success")
+
+        // cập nhật invoice sang paid
+        setInvoice({
+            ...invoice,
+            status: res.status as "paid"
+        })
+
+        // Đợi trạng thái hiện 1 chút rồi đóng modal
+        setTimeout(() => setShowQR(false), 700)
+    }
+
+    return (
+        <div className="bg-white shadow p-5 rounded-xl">
+            <h3 className="font-bold text-lg text-gray-700 mb-3">
+                Hóa đơn tháng {invoice.month}
+            </h3>
+
+            <div className="space-y-2 text-gray-700">
+                {invoice.items.map((i, idx) => (
+                    <p key={idx}>
+                        {i.name}: {i.qty} × {i.price.toLocaleString()}đ ={" "}
+                        <b>{(i.qty * i.price).toLocaleString()}đ</b>
+                    </p>
+                ))}
+>>>>>>> b43a51d (Thay đường dẫn API_URL)
             </div>
 
             {/* Financial & Incidents & Readings */}

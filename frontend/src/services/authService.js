@@ -5,7 +5,7 @@ async function safeJson(res) {
   const contentType = res.headers.get("content-type") || "";
   const text = await res.text();
 
-  if (!text) return {}; // body rỗng → trả object rỗng
+  if (!text) return {};
 
   if (contentType.includes("application/json")) {
     try {
@@ -16,7 +16,7 @@ async function safeJson(res) {
     }
   }
 
-  return {}; // Không phải JSON → trả object rỗng
+  return {};
 }
 
 // ============================
@@ -26,9 +26,7 @@ export const loginAPI = async (email, password) => {
   try {
     const res = await fetch(`${AA_API_URL}/api/auth/login`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
 
@@ -43,35 +41,20 @@ export const loginAPI = async (email, password) => {
 
     return data;
   } catch (error) {
-    console.error("Lỗi fetch:", error);
-    return {
-      success: false,
-      message: "Không thể kết nối đến máy chủ.",
-    };
+    console.error("Lỗi fetch login:", error);
+    return { success: false, message: "Không thể kết nối đến máy chủ." };
   }
 };
 
 // ============================
 // REGISTER API
 // ============================
-export const registerAPI = async (
-  fullName,
-  email,
-  password,
-  confirmPassword
-) => {
+export const registerAPI = async (fullName, email, password, confirmPassword) => {
   try {
     const res = await fetch(`${AA_API_URL}/api/auth/register`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        fullName,
-        email,
-        password,
-        confirmPassword,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fullName, email, password, confirmPassword }),
     });
 
     const data = await safeJson(res);
@@ -86,9 +69,6 @@ export const registerAPI = async (
     return data;
   } catch (error) {
     console.error("Lỗi fetch register:", error);
-    return {
-      success: false,
-      message: "Không thể kết nối đến máy chủ.",
-    };
+    return { success: false, message: "Không thể kết nối đến máy chủ." };
   }
 };
