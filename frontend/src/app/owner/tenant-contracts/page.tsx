@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -54,23 +53,31 @@ const API_URLS = {
 type ContractStatus = "active" | "ended" | "expired" | "terminated" | "pending";
 
 type Tenant = {
-  id: string;
+  id: string; // ✅ ID thật (GUID/string) để Contracts service verify
   fullName: string;
   email: string;
   phoneNumber: string;
   createdAt: string;
 };
 
-// CẬP NHẬT: Thêm các trường viết hoa (Id, FullName...) để tương thích Backend .NET
 type TenantApiDto = {
   id?: string;
   Id?: string;
+
+  // ✅ nhiều service trả userId là id thật
+  userId?: string;
+  UserId?: string;
+
+  tenantId?: string;
+  TenantId?: string;
+
   fullName?: string;
   FullName?: string;
   email?: string;
   Email?: string;
   phoneNumber?: string;
   phone?: string;
+
   createdAt?: string | null;
   createdDate?: string | null;
   registrationDate?: string | null;
@@ -179,11 +186,19 @@ function getAuthHeaders(): Record<string, string> {
   return headers;
 }
 
+// ✅ FIX: User Service đang đòi auth → gửi cả Bearer + X-Service-Api-Key
 function getAAServiceHeaders(): Record<string, string> {
-  return {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    "X-Service-Api-Key": SERVICE_API_KEY,
   };
+
+  if (SERVICE_API_KEY) headers["X-Service-Api-Key"] = SERVICE_API_KEY;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  return headers;
 }
 
 function redirectLoginIfAuthFail(status: number) {
@@ -231,11 +246,9 @@ function normalizeStatus(raw: unknown): ContractStatus {
     const s = raw.trim().toLowerCase();
     if (s === "active") return "active";
     if (s === "ended") return "ended";
-    if (s === "expired") return "expired";
-    if (s === "terminated") return "terminated";
+    if (s === "expired" || s === "expire") return "expired";
+    if (s === "terminated" || s === "terminate") return "terminated";
     if (s === "pending") return "pending";
-    if (s === "expire") return "expired";
-    if (s === "terminate") return "terminated";
     return "active";
   }
 
@@ -260,10 +273,7 @@ function computeStatusFromDates(
   }
 
   if (now < start) return "pending";
-  if (end) {
-    if (now > end) return "ended";
-    return "active";
-  }
+  if (end) return now > end ? "ended" : "active";
   return "active";
 }
 
@@ -324,20 +334,39 @@ async function fetchTenants(): Promise<Tenant[]> {
     headers: getAAServiceHeaders(),
     cache: "no-store",
   });
-  if (!res.ok) return [];
+
+  if (!res.ok) {
+    // ✅ đúng flow: unauthorized thì đá login
+    redirectLoginIfAuthFail(res.status);
+    const t = await res.text().catch(() => "");
+    console.error("fetchTenants failed:", res.status, t);
+    return [];
+  }
 
   const parsed = await safeReadJson<unknown>(res);
-  if (!parsed.ok) return [];
+  if (!parsed.ok) {
+    console.error("fetchTenants non-json:", parsed.text);
+    return [];
+  }
 
   const data = extractArray<TenantApiDto>(parsed.data);
-  return data.map((t, index): Tenant => ({
-    // SỬA: Ưu tiên lấy ID thật từ backend (t.id hoặc t.Id), tránh dùng index
-    id: t.id ?? t.Id ?? String(index + 1),
-    fullName: t.fullName ?? t.FullName ?? "Khách thuê",
-    email: t.email ?? t.Email ?? "",
-    phoneNumber: t.phoneNumber ?? t.phone ?? "",
-    createdAt: t.createdAt ?? t.createdDate ?? t.registrationDate ?? "",
-  }));
+
+  // ✅ CHỈ GIỮ TENANT CÓ ID THẬT (ưu tiên userId/tenantId)
+  return data
+    .map((t): Tenant => {
+      const realId = String(
+        t.userId ?? t.UserId ?? t.tenantId ?? t.TenantId ?? t.id ?? t.Id ?? ""
+      ).trim();
+
+      return {
+        id: realId,
+        fullName: t.fullName ?? t.FullName ?? "Khách thuê",
+        email: t.email ?? t.Email ?? "",
+        phoneNumber: t.phoneNumber ?? t.phone ?? "",
+        createdAt: t.createdAt ?? t.createdDate ?? t.registrationDate ?? "",
+      };
+    })
+    .filter((t) => t.id !== "");
 }
 
 async function fetchHouses(): Promise<House[]> {
@@ -406,16 +435,24 @@ async function fetchContracts(): Promise<Contract[]> {
   return rawData.map((c, index): Contract => {
     const id =
       typeof c.id === "number" ? c.id : typeof c.Id === "number" ? c.Id : index + 1;
+
     const roomId =
-      typeof c.roomId === "number" ? c.roomId : typeof c.RoomId === "number" ? c.RoomId : 0;
-    const tenantId = String(c.tenantId ?? c.TenantId ?? "");
+      typeof c.roomId === "number"
+        ? c.roomId
+        : typeof c.RoomId === "number"
+        ? c.RoomId
+        : 0;
+
+    const tenantId = String(c.tenantId ?? c.TenantId ?? "").trim();
     const startDate = c.startDate ?? c.StartDate ?? "";
     const endDate = (c.endDate ?? c.EndDate ?? null) as string | null;
+
     const priceRaw = (c.price ?? c.Price ?? 0) as unknown;
     const price = typeof priceRaw === "number" ? priceRaw : Number(priceRaw) || 0;
 
     const serverStatus = c.status ?? c.Status;
     const normalized = normalizeStatus(serverStatus);
+
     const shouldCompute =
       serverStatus === null ||
       serverStatus === undefined ||
@@ -461,6 +498,7 @@ export default function TenantContractsPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 6;
@@ -495,10 +533,10 @@ export default function TenantContractsPage() {
 
         if (!alive) return;
 
-        const tenantMap = new Map(tenantsFromApi.map((t) => [t.id, t]));
+        const tenantMap = new Map(tenantsFromApi.map((t) => [t.id.trim(), t]));
         const contractsWithTenantName = contractsFromApi.map((c) => ({
           ...c,
-          tenantName: tenantMap.get(c.tenantId)?.fullName ?? "",
+          tenantName: tenantMap.get(String(c.tenantId).trim())?.fullName ?? "",
         }));
 
         setTenants(tenantsFromApi);
@@ -559,11 +597,11 @@ export default function TenantContractsPage() {
 
   const refreshContracts = async (tenantsSnapshot: Tenant[]) => {
     const updated = await fetchContracts();
-    const tenantMap = new Map(tenantsSnapshot.map((t) => [t.id, t]));
+    const tenantMap = new Map(tenantsSnapshot.map((t) => [t.id.trim(), t]));
     setContracts(
       updated.map((c) => ({
         ...c,
-        tenantName: tenantMap.get(c.tenantId)?.fullName ?? "",
+        tenantName: tenantMap.get(String(c.tenantId).trim())?.fullName ?? "",
       }))
     );
   };
@@ -588,7 +626,7 @@ export default function TenantContractsPage() {
     setIsEditing(true);
     setEditingId(contract.id);
     setForm({
-      tenantId: contract.tenantId,
+      tenantId: String(contract.tenantId).trim(),
       roomId: contract.roomId,
       startDate: contract.startDate?.split("T")[0] ?? contract.startDate,
       endDate: (contract.endDate ?? "").split("T")[0] || "",
@@ -604,13 +642,17 @@ export default function TenantContractsPage() {
     setIsModalOpen(false);
   };
 
-  // SỬA: Hàm handleSubmit mới hoàn toàn
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 1. Kiểm tra kỹ đầu vào
-    if (!form.tenantId || !form.roomId || !form.startDate) {
-      alert("Vui lòng chọn đầy đủ: Khách thuê, Phòng và Ngày bắt đầu.");
+    if (!form.tenantId || !form.startDate) {
+      alert("Vui lòng chọn đầy đủ: Khách thuê và Ngày bắt đầu.");
+      return;
+    }
+
+    // ✅ chặn cứng roomId
+    if (!form.roomId || Number(form.roomId) <= 0) {
+      alert("Vui lòng chọn phòng hợp lệ.");
       return;
     }
 
@@ -629,20 +671,32 @@ export default function TenantContractsPage() {
 
       const method = isEditing ? "PUT" : "POST";
 
+      const tenantIdTrim = String(form.tenantId).trim();
+      const roomIdNum = Number(form.roomId);
+
+      // ✅ gửi camelCase + PascalCase
       const payload = {
-        tenantId: form.tenantId, // ID khách thuê
-        roomId: Number(form.roomId),
-        startDate: form.startDate, // YYYY-MM-DD
+        tenantId: tenantIdTrim,
+        roomId: roomIdNum,
+        startDate: form.startDate,
         endDate: form.endDate || null,
         price: priceNum,
         status: toBackendStatusNumber(form.status),
         fileUrl: form.fileUrl?.trim() || null,
+
+        TenantId: tenantIdTrim,
+        RoomId: roomIdNum,
+        StartDate: form.startDate,
+        EndDate: form.endDate || null,
+        Price: priceNum,
+        Status: toBackendStatusNumber(form.status),
+        FileUrl: form.fileUrl?.trim() || null,
       };
 
       console.log("Submitting payload:", payload);
 
       const res = await fetch(url, {
-        method: method,
+        method,
         headers: getAuthHeaders(),
         body: JSON.stringify(payload),
       });
@@ -651,21 +705,18 @@ export default function TenantContractsPage() {
         redirectLoginIfAuthFail(res.status);
         const errorText = await res.text();
         console.error("API Error:", errorText);
-        
         try {
-            const errJson = JSON.parse(errorText);
-            // Hiển thị lỗi chi tiết từ server nếu có
-            alert(`Lỗi: ${errJson.message || errJson.title || "Thao tác thất bại"}`);
+          const errJson = JSON.parse(errorText);
+          alert(`Lỗi: ${errJson.message || errJson.title || "Thao tác thất bại"}`);
         } catch {
-            alert(`Lỗi server (${res.status}). Vui lòng kiểm tra console.`);
+          alert(`Lỗi server (${res.status}). Vui lòng kiểm tra console.`);
         }
         return;
       }
 
-      alert(isEditing ? "Cập nhật thành công." : "Tạo hợp đồng thành công.");
+      alert(isEditing ? "Cập nhật thành công!" : "Tạo hợp đồng thành công!");
       await refreshContracts(tenants);
       setIsModalOpen(false);
-
     } catch (error) {
       console.error(error);
       alert("Lỗi hệ thống hoặc mất kết nối.");
@@ -703,9 +754,7 @@ export default function TenantContractsPage() {
             <FileText className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              Quản lý Hợp đồng
-            </h1>
+            <h1 className="text-2xl font-bold text-slate-900">Quản lý Hợp đồng</h1>
           </div>
         </div>
 
@@ -723,6 +772,7 @@ export default function TenantContractsPage() {
               }}
             />
           </div>
+
           <button type="button" onClick={openCreateModal} className={UI.btnPrimary}>
             <Plus className="h-5 w-5" />
             Thêm mới
@@ -748,16 +798,33 @@ export default function TenantContractsPage() {
           <table className="min-w-full text-sm text-left">
             <thead className="bg-slate-100 border-b border-slate-200 sticky top-0 z-10 shadow-sm">
               <tr>
-                <th className="px-5 py-3.5 font-bold text-slate-800 uppercase tracking-wider whitespace-nowrap">STT</th>
-                <th className="px-5 py-3.5 font-bold text-slate-800 uppercase tracking-wider">Nhà / Phòng</th>
-                <th className="px-5 py-3.5 font-bold text-slate-800 uppercase tracking-wider">Khách thuê</th>
-                <th className="px-5 py-3.5 font-bold text-slate-800 uppercase tracking-wider whitespace-nowrap">Ngày Bắt Đầu</th>
-                <th className="px-5 py-3.5 font-bold text-slate-800 uppercase tracking-wider whitespace-nowrap">Ngày Kết Thúc</th>
-                <th className="px-5 py-3.5 font-bold text-slate-800 uppercase tracking-wider whitespace-nowrap">Giá Thuê</th>
-                <th className="px-5 py-3.5 font-bold text-slate-800 uppercase tracking-wider">Trạng Thái</th>
-                <th className="px-5 py-3.5 text-right font-bold text-slate-800 uppercase tracking-wider">Thao Tác</th>
+                <th className="px-5 py-3.5 font-bold text-slate-800 uppercase tracking-wider whitespace-nowrap">
+                  STT
+                </th>
+                <th className="px-5 py-3.5 font-bold text-slate-800 uppercase tracking-wider">
+                  Nhà / Phòng
+                </th>
+                <th className="px-5 py-3.5 font-bold text-slate-800 uppercase tracking-wider">
+                  Khách thuê
+                </th>
+                <th className="px-5 py-3.5 font-bold text-slate-800 uppercase tracking-wider whitespace-nowrap">
+                  Ngày Bắt Đầu
+                </th>
+                <th className="px-5 py-3.5 font-bold text-slate-800 uppercase tracking-wider whitespace-nowrap">
+                  Ngày Kết Thúc
+                </th>
+                <th className="px-5 py-3.5 font-bold text-slate-800 uppercase tracking-wider whitespace-nowrap">
+                  Giá Thuê
+                </th>
+                <th className="px-5 py-3.5 font-bold text-slate-800 uppercase tracking-wider">
+                  Trạng Thái
+                </th>
+                <th className="px-5 py-3.5 text-right font-bold text-slate-800 uppercase tracking-wider">
+                  Thao Tác
+                </th>
               </tr>
             </thead>
+
             <tbody className="divide-y divide-slate-100">
               {pagedContracts.length === 0 ? (
                 <tr>
@@ -767,23 +834,46 @@ export default function TenantContractsPage() {
                 </tr>
               ) : (
                 pagedContracts.map((c, idx) => {
-                  const tenant = tenants.find((t) => t.id === c.tenantId);
+                  const tenant = tenants.find((t) => t.id === String(c.tenantId).trim());
                   const room = rooms.find((r) => r.id === c.roomId);
                   return (
-                    <tr key={c.id} className="hover:bg-indigo-50/50 transition-colors duration-150">
-                      <td className="px-5 py-4 text-slate-900 font-semibold">{startIndex + idx + 1}</td>
-                      <td className="px-5 py-4">
-                        <div className="font-bold text-indigo-900">{room?.houseName ? `${room.houseName}` : "—"}</div>
-                        <div className="text-xs font-semibold text-slate-600 mt-0.5">{room?.name ?? `ID: ${c.roomId}`}</div>
+                    <tr
+                      key={c.id}
+                      className="hover:bg-indigo-50/50 transition-colors duration-150"
+                    >
+                      <td className="px-5 py-4 text-slate-900 font-semibold">
+                        {startIndex + idx + 1}
                       </td>
+
                       <td className="px-5 py-4">
-                        <div className="font-bold text-slate-900">{tenant?.fullName ?? c.tenantName ?? c.tenantId}</div>
-                        <div className="text-xs font-medium text-slate-500 mt-0.5">{tenant?.phoneNumber}</div>
+                        <div className="font-bold text-indigo-900">
+                          {room?.houseName ? `${room.houseName}` : "—"}
+                        </div>
+                        <div className="text-xs font-semibold text-slate-600 mt-0.5">
+                          {room?.name ?? `ID: ${c.roomId}`}
+                        </div>
                       </td>
-                      <td className="px-5 py-4 text-slate-800 font-medium whitespace-nowrap">{formatDate(c.startDate)}</td>
-                      <td className="px-5 py-4 text-slate-800 font-medium whitespace-nowrap">{formatDate(c.endDate)}</td>
-                      <td className="px-5 py-4 text-slate-900 font-bold whitespace-nowrap">{formatPrice(c.price)}</td>
+
+                      <td className="px-5 py-4">
+                        <div className="font-bold text-slate-900">
+                          {tenant?.fullName ?? c.tenantName ?? c.tenantId}
+                        </div>
+                        <div className="text-xs font-medium text-slate-500 mt-0.5">
+                          {tenant?.phoneNumber ?? "—"}
+                        </div>
+                      </td>
+
+                      <td className="px-5 py-4 text-slate-800 font-medium whitespace-nowrap">
+                        {formatDate(c.startDate)}
+                      </td>
+                      <td className="px-5 py-4 text-slate-800 font-medium whitespace-nowrap">
+                        {formatDate(c.endDate)}
+                      </td>
+                      <td className="px-5 py-4 text-slate-900 font-bold whitespace-nowrap">
+                        {formatPrice(c.price)}
+                      </td>
                       <td className="px-5 py-4 whitespace-nowrap">{statusBadge(c.status)}</td>
+
                       <td className="px-5 py-4 text-right">
                         <div className="inline-flex items-center justify-end gap-2">
                           <button
@@ -816,8 +906,14 @@ export default function TenantContractsPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-700">
             <div>
-              Hiển thị <span className="font-bold text-slate-900">{startIndex + 1} - {Math.min(startIndex + PAGE_SIZE, totalItems)}</span> trên tổng số <span className="font-bold text-slate-900">{totalItems}</span> hợp đồng
+              Hiển thị{" "}
+              <span className="font-bold text-slate-900">
+                {startIndex + 1} - {Math.min(startIndex + PAGE_SIZE, totalItems)}
+              </span>{" "}
+              trên tổng số{" "}
+              <span className="font-bold text-slate-900">{totalItems}</span> hợp đồng
             </div>
+
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -827,7 +923,11 @@ export default function TenantContractsPage() {
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
-              <span className="px-2 font-bold text-slate-800">Trang {currentPageSafe} / {totalPages}</span>
+
+              <span className="px-2 font-bold text-slate-800">
+                Trang {currentPageSafe} / {totalPages}
+              </span>
+
               <button
                 type="button"
                 onClick={() => handleChangePage("next")}
@@ -845,14 +945,14 @@ export default function TenantContractsPage() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
           <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
-            {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
               <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                 <div className="p-1.5 bg-indigo-100 rounded-lg text-indigo-600">
-                   {isEditing ? <Pencil className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+                  {isEditing ? <Pencil className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
                 </div>
                 {isEditing ? "CHỈNH SỬA HỢP ĐỒNG" : "THÊM HỢP ĐỒNG MỚI"}
               </h2>
+
               <button
                 type="button"
                 onClick={closeModal}
@@ -863,10 +963,8 @@ export default function TenantContractsPage() {
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6 overflow-y-auto">
               <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Tenant */}
                 <div>
                   <label className={UI.label}>Khách thuê</label>
                   <select
@@ -878,13 +976,12 @@ export default function TenantContractsPage() {
                     <option value="">-- Chọn khách thuê --</option>
                     {tenants.map((t) => (
                       <option key={t.id} value={t.id}>
-                        {t.fullName} - {t.phoneNumber}
+                        {t.fullName} {t.phoneNumber ? `- ${t.phoneNumber}` : ""}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                {/* Room */}
                 <div>
                   <label className={UI.label}>
                     Phòng <span className="text-red-600">*</span>
@@ -892,7 +989,9 @@ export default function TenantContractsPage() {
                   <select
                     className={UI.input}
                     value={form.roomId}
-                    onChange={(e) => setForm({ ...form, roomId: Number(e.target.value) })}
+                    onChange={(e) =>
+                      setForm({ ...form, roomId: e.target.value ? Number(e.target.value) : "" })
+                    }
                   >
                     <option value="">-- Chọn phòng --</option>
                     {rooms.map((r) => (
@@ -903,7 +1002,6 @@ export default function TenantContractsPage() {
                   </select>
                 </div>
 
-                {/* Dates Grid */}
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <div>
                     <label className={UI.label}>
@@ -916,6 +1014,7 @@ export default function TenantContractsPage() {
                       onChange={(e) => setForm({ ...form, startDate: e.target.value })}
                     />
                   </div>
+
                   <div>
                     <label className={UI.label}>Ngày kết thúc</label>
                     <input
@@ -927,7 +1026,6 @@ export default function TenantContractsPage() {
                   </div>
                 </div>
 
-                {/* Price */}
                 <div>
                   <label className={UI.label}>
                     Giá thuê (VNĐ) <span className="text-red-600">*</span>
@@ -941,7 +1039,6 @@ export default function TenantContractsPage() {
                   />
                 </div>
 
-                {/* File URL */}
                 <div>
                   <label className={UI.label}>File Hợp đồng (URL)</label>
                   <input
@@ -953,7 +1050,6 @@ export default function TenantContractsPage() {
                   />
                 </div>
 
-                {/* Status */}
                 <div>
                   <label className={UI.label}>Trạng thái</label>
                   <select
@@ -969,34 +1065,28 @@ export default function TenantContractsPage() {
                   </select>
                 </div>
 
-                {/* Reminder Alert */}
                 <div className="flex items-start gap-3 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3">
                   <CalendarDays className="h-5 w-5 text-slate-500 mt-0.5" />
                   <div className="text-sm font-medium text-slate-600">
-                    <p>Lưu ý: Kiểm tra kỹ thông tin <span className="text-slate-900 font-bold">Phòng</span> và <span className="text-slate-900 font-bold">Khách thuê</span> trước khi lưu.</p>
+                    <p>
+                      Lưu ý: Kiểm tra kỹ thông tin{" "}
+                      <span className="text-slate-900 font-bold">Phòng</span> và{" "}
+                      <span className="text-slate-900 font-bold">Khách thuê</span> trước khi lưu.
+                    </p>
                   </div>
                 </div>
 
-                {/* Buttons */}
                 <div className="mt-2 flex items-center justify-end gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className={UI.btnOutline}
-                    disabled={isSubmitting}
-                  >
+                  <button type="button" onClick={closeModal} className={UI.btnOutline} disabled={isSubmitting}>
                     Huỷ bỏ
                   </button>
-                  <button
-                    type="submit"
-                    className={UI.btnPrimary}
-                    disabled={isSubmitting}
-                  >
+                  <button type="submit" className={UI.btnPrimary} disabled={isSubmitting}>
                     {isSubmitting ? "Đang xử lý..." : isEditing ? "Lưu thay đổi" : "Tạo hợp đồng"}
                   </button>
                 </div>
               </form>
             </div>
+
           </div>
         </div>
       )}
