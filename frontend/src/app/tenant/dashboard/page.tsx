@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { 
-    getTenantDashboardData, 
+import {
+    getTenantDashboardData,
     formatVND,
     UnpaidInvoiceItem,
     loadInvoiceDetails
@@ -13,7 +13,7 @@ import {
 
 interface TenantViewData {
     houseName: string;
-    roomNumber: string;
+    roomName: string;
     contractStatus: string;
     contractEndDate: string;
     isExpiringSoon: boolean;
@@ -53,7 +53,7 @@ const TenantDashboardPage: React.FC = () => {
     // Function để load chi tiết invoice khi click
     const handleExpandInvoice = async (invoiceId: number) => {
         const isExpanding = expandedInvoice !== invoiceId;
-        
+
         if (isExpanding) {
             // Kiểm tra xem đã load details chưa
             const invoice = data?.unpaidInvoices.find(inv => inv.invoiceId === invoiceId);
@@ -82,7 +82,7 @@ const TenantDashboardPage: React.FC = () => {
                 }
             }
         }
-        
+
         setExpandedInvoice(isExpanding ? invoiceId : null);
     };
 
@@ -95,7 +95,7 @@ const TenantDashboardPage: React.FC = () => {
                 const viewData: TenantViewData = {
                     // Contract Info
                     houseName: apiData.contract?.houseName || "Đang cập nhật",
-                    roomNumber: apiData.contract?.roomNumber || "---",
+                    roomName: apiData.contract?.roomName || "",
                     contractStatus: apiData.contract?.contractStatus || "Chưa có HĐ",
                     contractEndDate: apiData.contract?.contractEndDate
                         ? new Date(apiData.contract.contractEndDate).toLocaleDateString('vi-VN')
@@ -156,7 +156,7 @@ const TenantDashboardPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 text-gray-800">
                 <TenantInfoCard
                     title="Căn hộ/Phòng đang thuê"
-                    value={`${data.houseName} - ${data.roomNumber}`}
+                    value={`${data.houseName} - ${data.roomName}`}
                     apiEndpoint="/api/tenant/contracts/active-info"
                     className="lg:col-span-2"
                 />
@@ -218,7 +218,7 @@ const TenantDashboardPage: React.FC = () => {
                                             </button>
                                         </div>
                                     </div>
-                                    
+
                                     {/* Chi tiết các khoản */}
                                     {expandedInvoice === invoice.invoiceId && (
                                         <div className="p-3 bg-white border-t">

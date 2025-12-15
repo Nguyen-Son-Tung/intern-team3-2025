@@ -444,33 +444,6 @@ public class MonthlyReadingService : IMonthlyReadingService
                     }
                 });
             }
-
-            // --- Logic tạo Invoice ---
-            if (reading.Status != ReadingStatus.Confirmed && (electricUsage > 0 || waterUsage > 0))
-            {
-                var contractIdForInvoice = reading.TenantContractId;
-                
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        await _invoiceHttpClient.CreateInvoiceForMonthlyReadingAsync(
-                            tenantUserId,
-                            cycleId,
-                            cycleMonth,
-                            cycleYear,
-                            electricUsage,
-                            waterUsage,
-                            contractIdForInvoice
-                        );
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, $"Failed to create invoice for user {tenantUserId}, cycle {cycleId}");
-                    }
-                });
-            }
-
             return MapToResponseDto(reading);
         }
         catch (Exception ex)

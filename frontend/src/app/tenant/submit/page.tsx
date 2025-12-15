@@ -131,7 +131,24 @@ export default function SubmitMeterPage() {
                 setElectric(p => ({ ...p, status: "approved" }));
                 setWater(p => ({ ...p, status: "approved" }));
 
-                setInvoiceStatus('created');
+                const electricUsage = electric.new - electric.old; // Cần chỉ số cũ
+                const waterUsage = water.new - water.old;     // Cần chỉ số cũ
+
+                const invoiceData = {
+                    cycleId: cycle.id,
+                    electricUsage: electricUsage,
+                    waterUsage: waterUsage
+                };
+
+                const invoiceRes = await readingService.createInvoice(invoiceData); // Thay readingService bằng invoiceService
+                if (invoiceRes.ok) {
+                    // Tạo hóa đơn thành công
+                    setInvoiceStatus('created');
+                } else {
+                    // Xử lý lỗi tạo hóa đơn
+                    showAlert("Gửi thành công, NHƯNG tạo hóa đơn thất bại", "Vui lòng kiểm tra lại trên hệ thống hoặc thử lại.", 'warning');
+                    // Quan trọng: Chỉ số đã được lưu, nhưng hóa đơn thì chưa.
+                }
             } else {
                 showAlert("Gửi thất bại", "Vui lòng thử lại.", 'error');
             }
@@ -146,7 +163,12 @@ export default function SubmitMeterPage() {
     const isConfirmedReading = mapStatusToVietnamese(electric.status) === "Đã xác nhận" && mapStatusToVietnamese(water.status) === "Đã xác nhận";
     const hasNegativeError = (electric.new < electric.old) || (water.new < water.old);
     const hasNaNError = isNaN(electric.new) || isNaN(water.new);
-    const isSubmitDisabled = isInitialLoading || isConfirmedReading || invoiceStatus === 'created' || hasNegativeError || hasNaNError;
+    const hasMissingInputs =
+        !electricFile ||
+        !waterFile ||
+        electric.new === 0 ||
+        water.new === 0;
+    const isSubmitDisabled = hasMissingInputs || isInitialLoading || isConfirmedReading || invoiceStatus === 'created' || hasNegativeError || hasNaNError;
 
     // Logic cảnh báo
     const elecUsage = electric.new - electric.old;

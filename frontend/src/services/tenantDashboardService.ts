@@ -4,7 +4,7 @@ import { getInvoiceDetail } from "@/services/invoiceService";
 
 export interface ActiveContractData {
     houseName: string;
-    roomNumber: string;
+    roomName: string;
     contractEndDate: string;
     contractStatus: string;
     isExpiringSoon: boolean;
