@@ -19,7 +19,13 @@ public class AutoMapperProfile : Profile
         CreateMap<UpdateRoomDto, Room>();
 
         CreateMap<CreateContractDto, TenantContracts>().ForMember(dest => dest.Status, opt => opt.Ignore());;
+<<<<<<< HEAD
         CreateMap<TenantContracts, ContractDto>();
+=======
+        CreateMap<TenantContracts, ContractDto>()
+            .ForMember(dest => dest.HouseName, opt => opt.MapFrom(src => src.Room != null ? src.Room.House.Name : null))
+            .ForMember(dest => dest.RoomName, opt => opt.MapFrom(src => src.Room != null ? src.Room.Name : null));
+>>>>>>> origin/main
         CreateMap<UpdateContractDto, TenantContracts>();
     }
 }

@@ -7,6 +7,10 @@ on:
     paths:
       - 'AA/**'
       - '.github/workflows/aa-cicd.yaml'
+<<<<<<< HEAD
+=======
+  workflow_dispatch:
+>>>>>>> origin/main
 
 env:
   AWS_REGION: ap-southeast-1 # Change to your AWS region

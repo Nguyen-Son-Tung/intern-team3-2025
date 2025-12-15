@@ -1,34 +1,58 @@
+# ======================
 # macOS
+# ======================
 .DS_Store
 .AppleDouble
 .LSOverride
 ._*
 
+# ======================
 # Windows
+# ======================
 Thumbs.db
 Desktop.ini
 
-# IDEs
+# ======================
+# IDEs / Editors
+# ======================
 .vscode/
 .idea/
 .vs/
 
+<<<<<<< HEAD
 # Sensitive configuration files
 appsettings.Development.json
 appsettings.*.json
 !appsettings.json
 !appsettings.Example.json
+=======
+# ======================
+# Environment & Secrets
+# ======================
+>>>>>>> origin/main
 .env
 .env.local
 .env.*.local
 
+<<<<<<< HEAD
 # Build output
+=======
+appsettings.Development.json
+appsettings.*.json
+!appsettings.json
+!appsettings.Example.json
+
+# ======================
+# .NET Build Output
+# ======================
+>>>>>>> origin/main
 bin/
 obj/
 *.dll
 *.exe
 *.pdb
 
+<<<<<<< HEAD
 # Logs
 nginx/logs/
 *.log
@@ -36,3 +60,34 @@ nginx/logs/
 # Python
 __pycache__/
 uploads/
+=======
+# ======================
+# Logs
+# ======================
+*.log
+nginx/logs/
+
+# ======================
+# Uploads / Temp
+# ======================
+uploads/
+__pycache__/
+
+# ======================
+# Node / NextJS
+# ======================
+node_modules/
+npm-debug.log*
+yarn.lock
+pnpm-lock.yaml
+
+.next/
+out/
+dist/
+
+# ======================
+# Scripts
+# ======================
+start-services.sh
+slack_alert.sh
+>>>>>>> origin/main

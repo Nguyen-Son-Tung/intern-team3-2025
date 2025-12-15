@@ -18,7 +18,11 @@ namespace PropertyService.Controllers
     {
         private readonly IContractService _contractService;
 
+<<<<<<< HEAD
         // ⭐ CONSTRUCTOR
+=======
+        //  CONSTRUCTOR
+>>>>>>> origin/main
         public TenantContractsController(IContractService contractService)
         {
             _contractService = contractService;
@@ -44,7 +48,11 @@ namespace PropertyService.Controllers
             }
             
             // 1. Gọi Service để lấy Hợp đồng đang hoạt động
+<<<<<<< HEAD
             var contract = await _contractService.GetActiveContractByTenantIdAsync(tenantId);
+=======
+            var contract = await _contractService.GetActiveContractByTenantIdAsync(tenantId.ToString());
+>>>>>>> origin/main
 
             if (contract == null)
             {
@@ -86,7 +94,11 @@ namespace PropertyService.Controllers
                 data = new 
                 {
                     HouseName = contract.HouseName,
+<<<<<<< HEAD
                     RoomNumber = contract.RoomNumber,
+=======
+                    RoomName = contract.RoomName,
+>>>>>>> origin/main
                     ContractEndDate = contract.EndDate, 
                     // Sử dụng cú pháp rút gọn cho biến cục bộ
                     contractStatus,     
@@ -119,5 +131,27 @@ namespace PropertyService.Controllers
                 return StatusCode(500, new { success = false, message = "Internal server error." });
             }
         }
+<<<<<<< HEAD
     }
 }
+=======
+
+        /// <summary>
+        /// Get active contract ID for a tenant (Service-to-service)
+        /// </summary>
+        [HttpGet("active/{tenantId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetActiveContractId(string tenantId)
+        {
+
+            var contract = await _contractService.GetActiveContractByTenantIdAsync(tenantId);
+            if (contract == null)
+            {
+                return NotFound(new { error = "No active contract found" });
+            }
+
+            return Ok(new { ContractId = contract.Id });
+        }
+    }
+}
+>>>>>>> origin/main

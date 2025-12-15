@@ -21,7 +21,11 @@ public class TenantInvoicesController : ControllerBase
     // Helper để lấy Tenant ID từ JWT
     private Guid GetUserIdGuid() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException("User ID not found in token."));
     
+<<<<<<< HEAD
     // ⭐ MỤC 4: Hóa đơn cần thanh toán VÀ Tổng tiền
+=======
+    //  MỤC 4: Hóa đơn cần thanh toán VÀ Tổng tiền
+>>>>>>> origin/main
     [HttpGet("unpaid-invoices")] // GET api/tenant/invoices/unpaid-invoices
     [ProducesResponseType(typeof(UnpaidInvoicesResponseDto), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.Unauthorized)]

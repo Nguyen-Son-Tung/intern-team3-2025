@@ -6,4 +6,10 @@ public interface IUserServiceClient
 {
     Task<UserInfo?> GetUserInfoAsync(string userId);
     Task<List<string>> GetUserIdsByOwnerAsync(string ownerId);
+<<<<<<< HEAD
+=======
+    Task<List<UserInfo>> GetTenantsByOwnerIdAsync(string ownerId);
+
+    Task<List<string>> GetAllOwnerIdsAsync();
+>>>>>>> origin/main
 }

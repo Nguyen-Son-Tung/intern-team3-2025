@@ -25,7 +25,11 @@ ChartJS.register(
 
 const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
     const chartData = {
+<<<<<<< HEAD
         labels: data.map(item => item.month),
+=======
+        labels: data.map(item => item.monthYear),
+>>>>>>> origin/main
         datasets: [
             {
                 label: 'Số tiền đã thanh toán',
@@ -97,4 +101,8 @@ const RevenueChart: React.FC<RevenueChartProps> = ({ data }) => {
     );
 };
 
+<<<<<<< HEAD
 export default RevenueChart;
+=======
+export default RevenueChart;
+>>>>>>> origin/main

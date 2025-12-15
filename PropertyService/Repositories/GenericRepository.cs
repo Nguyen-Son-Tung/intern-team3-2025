@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 using PropertyService; 
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions; 
+=======
+using PropertyService.Data; // <--- Cần cho ApplicationDbContext
+using Microsoft.EntityFrameworkCore; // <--- Cần cho DbSet
+using System.Linq.Expressions; // <--- THIẾU CÁI NÀY
+>>>>>>> origin/main
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;

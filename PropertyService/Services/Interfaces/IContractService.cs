@@ -18,7 +18,11 @@ namespace PropertyService.Services.Interfaces
         Task<bool> IsRoomOwnedByAsync(int roomId, Guid ownerId);
         Task<bool> IsContractOwnedByAsync(int contractId, Guid ownerId);
         Task<IEnumerable<ContractDto>> GetContractsByTenantIdAsync(Guid tenantId);
+<<<<<<< HEAD
         Task<ContractDto?> GetActiveContractByTenantIdAsync(Guid tenantId);
+=======
+        Task<ContractDto?> GetActiveContractByTenantIdAsync(string tenantId);
+>>>>>>> origin/main
         Task<IEnumerable<ContractDto>> GetExpiringContractsAsync(Guid ownerId, int daysThreshold = 30);
         Task<PropertyDetailsDto?> GetPropertyDetailsByContractIdAsync(int contractId);
 

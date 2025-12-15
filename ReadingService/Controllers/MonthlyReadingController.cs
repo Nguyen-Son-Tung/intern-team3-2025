@@ -6,7 +6,19 @@ using ReadingService.Features.MonthlyReading.DTOs;
 using ReadingService.Features.ReadingCycle;
 using ReadingService.Data;
 using ReadingService.Models;
+<<<<<<< HEAD
 using System.Net;
+=======
+using ReadingService.Services;
+using ReadingService.Features.User.DTOs;
+using ReadingService.DTOs;
+using ReadingService.Enums;
+using System.Net;
+using Microsoft.EntityFrameworkCore;
+using ReadingService.Features.User;
+using ReadingService.Features.Property;
+using ReadingService.Features.Property.DTOs;
+>>>>>>> origin/main
 namespace ReadingService.Controllers;
 
 [ApiController]
@@ -18,18 +30,38 @@ public class MonthlyReadingController : ControllerBase
     private readonly ILogger<MonthlyReadingController> _logger;
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _config;
+<<<<<<< HEAD
+=======
+
+    private readonly IMessageProducer _producer;
+    private readonly IUserService _userService;
+    private readonly IPropertyService _propertyService;
+>>>>>>> origin/main
     public MonthlyReadingController(
         IMonthlyReadingService monthlyReadingService,
         IReadingCycleService readingCycleService,
         ILogger<MonthlyReadingController> logger,
         ApplicationDbContext context,
+<<<<<<< HEAD
         IConfiguration config)
+=======
+        IConfiguration config,
+        IMessageProducer producer,
+        IUserService userService,
+        IPropertyService propertyService)
+>>>>>>> origin/main
     {
         _monthlyReadingService = monthlyReadingService;
         _readingCycleService = readingCycleService;
         _logger = logger;
         _context = context;
         _config = config;
+<<<<<<< HEAD
+=======
+        _producer = producer;
+        _userService = userService;
+        _propertyService = propertyService;
+>>>>>>> origin/main
     }
 
     /// <summary>
@@ -78,7 +110,11 @@ public class MonthlyReadingController : ControllerBase
     }
 
     /// <summary>
+<<<<<<< HEAD
     /// Lấy MonthlyReading của user theo CycleId
+=======
+    /// Get user's MonthlyReading by CycleId
+>>>>>>> origin/main
     /// </summary>
     [Authorize]
     [HttpGet("by-cycle/{cycleId}")]
@@ -112,7 +148,7 @@ public class MonthlyReadingController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy thông tin MonthlyReading theo ID
+    /// Get MonthlyReading information by ID
     /// </summary>
     [Authorize]
     [HttpGet("{id}")]
@@ -128,7 +164,7 @@ public class MonthlyReadingController : ControllerBase
         return Ok(response);
     }
     /// <summary>
-    /// Xóa MonthlyReading
+    /// Delete MonthlyReading
     /// </summary>
     [Authorize(Roles = "Owner")]
     [HttpDelete("{id}")]
@@ -181,18 +217,30 @@ public class MonthlyReadingController : ControllerBase
 
         try
         {
+<<<<<<< HEAD
             // 3. GỌI SERVICE XỬ LÝ LOGIC LỌC VÀ LÀM GIÀU DỮ LIỆU
             // Service sẽ tự động: 
             // a) Dùng Role và UserId để xác định phạm vi truy vấn (Tenant cá nhân vs Owner quản lý)
             // b) Gọi User Service và Property Service để lấy tên Tenant, Nhà, Phòng.
+=======
+            // 3. CALL SERVICE TO HANDLE FILTERING AND DATA ENRICHMENT LOGIC
+            // Service will automatically: 
+            // a) Use Role and UserId to determine query scope (Individual Tenant vs Owner management)
+            // b) Call User Service and Property Service to get Tenant names, House, Room.
+>>>>>>> origin/main
             var readings = await _monthlyReadingService.GetAllReadingsByRoleAsync(
                 userId, 
                 role, 
                 ownerIdClaim 
             );
             
+<<<<<<< HEAD
             // Ghi log thông báo thành công
             _logger.LogInformation("UserId {UserId} ({Role}) đã lấy thành công {Count} MonthlyReadings.", userId, role, readings.Count());
+=======
+            // Log success message
+            _logger.LogInformation("UserId {UserId} ({Role}) successfully retrieved {Count} MonthlyReadings.", userId, role, readings.Count());
+>>>>>>> origin/main
 
             return Ok(readings);
         }
@@ -205,7 +253,11 @@ public class MonthlyReadingController : ControllerBase
     }
 
     /// <summary>
+<<<<<<< HEAD
     /// API trả về hoá đơn có chỉ số điện bất thường (tiêu thụ điện > threshold)
+=======
+    /// API returns invoices with abnormal electric readings (electric consumption > threshold)
+>>>>>>> origin/main
     /// </summary>
     [Authorize(Roles = "Owner")]
     [HttpGet("abnormal-electric")]
@@ -213,9 +265,107 @@ public class MonthlyReadingController : ControllerBase
     {
         try
         {
+<<<<<<< HEAD
             var allReadings = await _monthlyReadingService.GetAllAsync();
             var abnormal = allReadings.Where(r => (r.ElectricNew - r.ElectricOld > threshold)).ToList();
             return Ok(abnormal);
+=======
+            // Get all readings with ReadingCycle included
+            var allReadings = await _context.MonthlyReadings
+                .Include(r => r.ReadingCycle)
+                .ToListAsync();
+
+            var abnormal = allReadings.Where(r => (r.ElectricNew - r.ElectricOld > threshold)).ToList();
+
+            if (!abnormal.Any())
+            {
+                return Ok(new List<MonthlyReadingResponseDto>());
+            }
+
+            // Collect contractIds and userIds for enrichment
+            var contractIds = abnormal
+                .Where(r => r.TenantContractId.HasValue)
+                .Select(r => r.TenantContractId!.Value)
+                .Distinct()
+                .ToList();
+
+            var userIds = abnormal
+                .Where(r => r.ReadingCycle != null)
+                .Select(r => r.ReadingCycle!.UserId)
+                .Distinct()
+                .ToList();
+
+            // Get property details
+            var propertyDetailsMap = new Dictionary<int, PropertyDetailsDto>();
+            if (contractIds.Any())
+            {
+                try
+                {
+                    var detailsList = await _propertyService.GetDetailsByContractIdsAsync(contractIds);
+                    propertyDetailsMap = detailsList
+                        .Where(d => d.ContractId.HasValue)
+                        .ToDictionary(d => d.ContractId!.Value, d => d);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error calling PropertyService for abnormal electric readings");
+                }
+            }
+
+            // Get user info
+            var tenantMap = new Dictionary<string, string>();
+            if (userIds.Any())
+            {
+                try
+                {
+                    var tenantInfos = await _userService.GetUsersByIdsAsync(userIds);
+                    tenantMap = tenantInfos.ToDictionary(t => t.Id, t => t.FullName);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error calling UserService for abnormal electric readings");
+                }
+            }
+
+            // Map to response DTOs with enrichment
+            var responseList = abnormal.Select(reading =>
+            {
+                var dto = new MonthlyReadingResponseDto
+                {
+                    Id = reading.Id,
+                    CycleId = reading.CycleId,
+                    ElectricOld = reading.ElectricOld,
+                    ElectricNew = reading.ElectricNew,
+                    ElectricPhotoUrl = reading.ElectricPhotoUrl,
+                    WaterOld = reading.WaterOld,
+                    WaterNew = reading.WaterNew,
+                    WaterPhotoUrl = reading.WaterPhotoUrl,
+                    Status = reading.Status,
+                    CreatedAt = reading.CreatedAt,
+                    UpdatedAt = reading.UpdatedAt,
+                    TenantContractId = reading.TenantContractId,
+                    TenantId = reading.ReadingCycle?.UserId ?? string.Empty,
+                };
+
+                // Enrich tenant name
+                if (reading.ReadingCycle != null && tenantMap.TryGetValue(reading.ReadingCycle.UserId, out var tenantName))
+                {
+                    dto.TenantName = tenantName;
+                }
+
+                // Enrich property details
+                if (reading.TenantContractId.HasValue && propertyDetailsMap.TryGetValue(reading.TenantContractId.Value, out var details))
+                {
+                    dto.HouseName = details.HouseName;
+                    dto.RoomName = details.RoomName;
+                    dto.Floor = details.Floor;
+                }
+
+                return dto;
+            }).ToList();
+
+            return Ok(responseList);
+>>>>>>> origin/main
         }
         catch (Exception ex)
         {
@@ -225,7 +375,11 @@ public class MonthlyReadingController : ControllerBase
     }
 
     /// <summary>
+<<<<<<< HEAD
     /// API trả về hoá đơn có chỉ số nước bất thường (tiêu thụ nước > threshold)
+=======
+    /// API returns invoices with abnormal water readings (water consumption > threshold)
+>>>>>>> origin/main
     /// </summary>
     [Authorize(Roles = "Owner")]
     [HttpGet("abnormal-water")]
@@ -233,9 +387,107 @@ public class MonthlyReadingController : ControllerBase
     {
         try
         {
+<<<<<<< HEAD
             var allReadings = await _monthlyReadingService.GetAllAsync();
             var abnormal = allReadings.Where(r => (r.WaterNew - r.WaterOld > threshold)).ToList();
             return Ok(abnormal);
+=======
+            // Get all readings with ReadingCycle included
+            var allReadings = await _context.MonthlyReadings
+                .Include(r => r.ReadingCycle)
+                .ToListAsync();
+
+            var abnormal = allReadings.Where(r => (r.WaterNew - r.WaterOld > threshold)).ToList();
+
+            if (!abnormal.Any())
+            {
+                return Ok(new List<MonthlyReadingResponseDto>());
+            }
+
+            // Collect contractIds and userIds for enrichment
+            var contractIds = abnormal
+                .Where(r => r.TenantContractId.HasValue)
+                .Select(r => r.TenantContractId!.Value)
+                .Distinct()
+                .ToList();
+
+            var userIds = abnormal
+                .Where(r => r.ReadingCycle != null)
+                .Select(r => r.ReadingCycle!.UserId)
+                .Distinct()
+                .ToList();
+
+            // Get property details
+            var propertyDetailsMap = new Dictionary<int, PropertyDetailsDto>();
+            if (contractIds.Any())
+            {
+                try
+                {
+                    var detailsList = await _propertyService.GetDetailsByContractIdsAsync(contractIds);
+                    propertyDetailsMap = detailsList
+                        .Where(d => d.ContractId.HasValue)
+                        .ToDictionary(d => d.ContractId!.Value, d => d);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error calling PropertyService for abnormal water readings");
+                }
+            }
+
+            // Get user info
+            var tenantMap = new Dictionary<string, string>();
+            if (userIds.Any())
+            {
+                try
+                {
+                    var tenantInfos = await _userService.GetUsersByIdsAsync(userIds);
+                    tenantMap = tenantInfos.ToDictionary(t => t.Id, t => t.FullName);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error calling UserService for abnormal water readings");
+                }
+            }
+
+            // Map to response DTOs with enrichment
+            var responseList = abnormal.Select(reading =>
+            {
+                var dto = new MonthlyReadingResponseDto
+                {
+                    Id = reading.Id,
+                    CycleId = reading.CycleId,
+                    ElectricOld = reading.ElectricOld,
+                    ElectricNew = reading.ElectricNew,
+                    ElectricPhotoUrl = reading.ElectricPhotoUrl,
+                    WaterOld = reading.WaterOld,
+                    WaterNew = reading.WaterNew,
+                    WaterPhotoUrl = reading.WaterPhotoUrl,
+                    Status = reading.Status,
+                    CreatedAt = reading.CreatedAt,
+                    UpdatedAt = reading.UpdatedAt,
+                    TenantContractId = reading.TenantContractId,
+                    TenantId = reading.ReadingCycle?.UserId ?? string.Empty,
+                };
+
+                // Enrich tenant name
+                if (reading.ReadingCycle != null && tenantMap.TryGetValue(reading.ReadingCycle.UserId, out var tenantName))
+                {
+                    dto.TenantName = tenantName;
+                }
+
+                // Enrich property details
+                if (reading.TenantContractId.HasValue && propertyDetailsMap.TryGetValue(reading.TenantContractId.Value, out var details))
+                {
+                    dto.HouseName = details.HouseName;
+                    dto.RoomName = details.RoomName;
+                    dto.Floor = details.Floor;
+                }
+
+                return dto;
+            }).ToList();
+
+            return Ok(responseList);
+>>>>>>> origin/main
         }
         catch (Exception ex)
         {
@@ -245,13 +497,21 @@ public class MonthlyReadingController : ControllerBase
     }
 
     /// <summary>
+<<<<<<< HEAD
     /// Proxy S3 image: trả về ảnh từ S3 (dùng cho frontend)
+=======
+    /// Proxy S3 image: return image from S3 (used for frontend)
+>>>>>>> origin/main
     /// </summary>
     [AllowAnonymous]
     [HttpGet("image-proxy")]
     public async Task<IActionResult> GetS3Image([FromQuery] string key)
     {
+<<<<<<< HEAD
         // Đọc config AWS từ appsettings
+=======
+        // Read AWS config from appsettings
+>>>>>>> origin/main
         var awsSection = _config.GetSection("AWS");
         var awsAccessKey = awsSection["AccessKey"];
         var awsSecretKey = awsSection["SecretKey"];
@@ -282,4 +542,116 @@ public class MonthlyReadingController : ControllerBase
             return StatusCode(500, new { message = "Lỗi tạo pre-signed URL ảnh từ S3", error = ex.Message });
         }
     }
+<<<<<<< HEAD
+=======
+
+    /// <summary>
+    /// API Owner sử dụng để nhắc các Tenant chưa nộp chỉ số điện nước cho chu kỳ MỚI NHẤT.
+    /// Endpoint: POST api/MonthlyReading/remind-submission/latest
+    /// </summary>
+    [Authorize(Roles = "Owner")]
+    [HttpPost("remind-submission/latest")] 
+    public async Task<IActionResult> RemindSubmissionLatest()
+    {
+        // 1. TRÍCH XUẤT OWNER ID
+        var ownerId = User.FindFirstValue(ClaimTypes.NameIdentifier) 
+                        ?? User.FindFirstValue("sub") 
+                        ?? User.FindFirstValue("userId");
+        
+        if (string.IsNullOrEmpty(ownerId))
+        {
+            return Unauthorized(new { message = "Không tìm thấy thông tin Owner" });
+        }
+        
+        try
+        {
+            // 2. TÌM CYCLE MỚI NHẤT
+            // Hàm này trả về ReadingCycleDto của bản ghi ReadingCycle DO OWNER tạo ra 
+            var latestCycle = await _readingCycleService.GetLatestCycleByOwnerAsync(ownerId);
+            
+            if (latestCycle == null)
+            {
+                return NotFound(new { message = "Không tìm thấy chu kỳ đọc chỉ số mới nhất hoặc đang hoạt động." });
+            }
+
+            // ID này là ID của ReadingCycle bản ghi chung (thuộc Owner)
+            int ownerCycleId = latestCycle.Id; 
+
+            // 3. GỌI SERVICE LẤY DANH SÁCH KHÁCH HÀNG CHƯA NỘP CHỈ SỐ
+            var tenantsToRemind = await _readingCycleService.GetTenantsMissingReadingAsync(ownerCycleId);
+            
+            if (tenantsToRemind == null || !tenantsToRemind.Any())
+            {
+                return Ok(new { message = $"Thành công: Không có khách hàng nào chưa nộp chỉ số cho chu kỳ mới nhất (ID {ownerCycleId})." });
+            }
+
+            // 4. CHUẨN BỊ VÀ GỬI MESSAGE QUA RABBITMQ
+            
+            // OwnerName cần được lấy từ UserService (giả định)
+            // Nếu chưa có UserService, tạm thời dùng Owner ID để tránh lỗi.
+            string ownerName = "Chủ nhà"; // Sửa lại: Lấy từ UserService nếu có
+            
+            var customersToNotify = tenantsToRemind.Select(t => new UserInfo // ⭐️ Sử dụng UserInfo đã được using
+            {
+                Id = t.Id, FullName = t.FullName, Email = t.Email, OwnerId = t.OwnerId 
+            }).ToList();
+
+            var message = new ReadingNotificationMessage 
+            {
+                Type = NotificationType.RemindSubmission,
+                ReadingCycleId = ownerCycleId,
+                CustomersToNotify = customersToNotify,
+                OwnerName = ownerName,
+                CycleMonth = latestCycle.CycleMonth,
+                CycleYear = latestCycle.CycleYear
+            };
+            
+            // ⭐️ Sửa lỗi CS1503/CS0828 (Giả định): đảm bảo SendMessage được gọi đúng cú pháp.
+            // Nếu lỗi vẫn còn, cần kiểm tra code chi tiết dòng 345, 349, 350.
+            _producer.SendMessage(message, _config["RabbitMQ:QueueName"] ?? "notification_queue");
+            
+            _logger.LogInformation($"Gửi nhắc nhở nộp chỉ số thành công cho {tenantsToRemind.Count()} khách hàng (Cycle ID: {ownerCycleId}).");
+
+            return Ok(new 
+            { 
+                message = $"Đã gửi nhắc nhở nộp chỉ số thành công đến {tenantsToRemind.Count()} khách hàng cho chu kỳ {latestCycle.CycleMonth}/{latestCycle.CycleYear}.",
+                RecipientsCount = tenantsToRemind.Count()
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi xử lý RemindSubmission cho Cycle mới nhất");
+            return StatusCode(500, new { message = "Có lỗi xảy ra khi gửi nhắc nhở." });
+        }
+    }
+
+    /// <summary>
+    /// Trigger auto invoice creation for current month (for testing purposes)
+    /// Only creates invoices for tenants belonging to the calling owner
+    /// </summary>
+    [Authorize(Roles = "Owner")]
+    [HttpPost("trigger-auto-invoice")]
+    public async Task<IActionResult> TriggerAutoInvoice()
+    {
+        var ownerId = User.FindFirstValue(ClaimTypes.NameIdentifier) 
+                     ?? User.FindFirstValue("sub") 
+                     ?? User.FindFirstValue("userId");
+        
+        if (string.IsNullOrEmpty(ownerId))
+        {
+            return Unauthorized(new { message = "Owner ID not found" });
+        }
+
+        try
+        {
+            await _monthlyReadingService.TriggerAutoInvoicesAsync(ownerId);
+            return Ok(new { message = "Auto invoice trigger completed for your tenants. Check logs for details." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error triggering auto invoice");
+            return StatusCode(500, new { message = "Error triggering auto invoice", error = ex.Message });
+        }
+    }
+>>>>>>> origin/main
 }

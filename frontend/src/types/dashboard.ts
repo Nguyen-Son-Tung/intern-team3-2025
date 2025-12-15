@@ -2,6 +2,10 @@
 export interface OverdueInvoiceListItem {
     id: string;
     tenantName: string;
+<<<<<<< HEAD
+=======
+    houseName: string;
+>>>>>>> origin/main
     roomNumber: string;
     amount: string;
     dueDate: string;
@@ -23,6 +27,10 @@ export interface AbnormalReadingListItem {
     houseName: string;
     type: 'Electricity' | 'Water';
     increasePercent: number;
+<<<<<<< HEAD
+=======
+    increaseAmount: number;
+>>>>>>> origin/main
 }
 
 export interface NearExpiryContractListItem {
@@ -34,11 +42,19 @@ export interface NearExpiryContractListItem {
     remainingDays: number;
 }
 
+<<<<<<< HEAD
 export interface RevenueDataPoint {
     month: string;
     paidAmount: number; // Đã thanh toán (Triệu)
     pendingAmount: number; // Chờ thanh toán (chưa quá hạn - Triệu)
     overdueAmount: number; // Quá hạn (Overdue - Triệu)
+=======
+export interface MonthlyRevenueDataPoint {
+    monthYear: string;     
+    paidAmount: number;
+    pendingAmount: number;
+    overdueAmount: number;
+>>>>>>> origin/main
 }
 
 export interface BuildingPerformance {
@@ -49,6 +65,10 @@ export interface BuildingPerformance {
     occupiedRooms: number;
     occupancyRate: string;
     currentMonthRevenue: string; // Chuỗi tiền tệ
+<<<<<<< HEAD
+=======
+    rawRevenue: number;
+>>>>>>> origin/main
 }
 
 export interface OwnerDashboardData {
@@ -71,7 +91,11 @@ export interface OwnerDashboardData {
     };
 
     // Dữ liệu Chart và Bảng
+<<<<<<< HEAD
     revenueChartData: RevenueDataPoint[];
+=======
+    revenueChartData: MonthlyRevenueDataPoint[];
+>>>>>>> origin/main
     buildingPerformanceData: BuildingPerformance[];
 
     // Thêm các trường details để Modal truy cập
@@ -93,6 +117,13 @@ export interface OverdueInvoiceAPIResponse {
     paidDate: string | null;
     createdAt: string;
     updatedAt: string;
+<<<<<<< HEAD
+=======
+    tenantContractId: number;
+    houseName: string;
+    roomName: string;
+    floor: number;
+>>>>>>> origin/main
     items: Array<{
         id: number;
         description: string;
@@ -114,14 +145,21 @@ export interface ModalProps {
 export interface DashboardCardProps {
     title: string;
     value: string;
+<<<<<<< HEAD
     apiEndpoint: string;
+=======
+>>>>>>> origin/main
     color: 'green' | 'red' | 'yellow' | 'default';
     onClick?: () => void;
     isClickable?: boolean;
 }
 
 export interface RevenueChartProps {
+<<<<<<< HEAD
     data: OwnerDashboardData['revenueChartData'];
+=======
+    data: MonthlyRevenueDataPoint[];
+>>>>>>> origin/main
     annualTurnover: string;
 }
 
@@ -130,13 +168,68 @@ export interface OccupancyChartProps {
     vacant: number;
 }
 
+<<<<<<< HEAD
 export interface DataTableProps {
+=======
+export interface DataTableProps<T = Record<string, unknown>> {
+>>>>>>> origin/main
     title: string;
     columns: Array<{
         key: string;
         header: string;
+<<<<<<< HEAD
         render?: (value: any, row: any) => React.ReactNode;
     }>;
     data: any[];
     onRowClick?: (row: any) => void;
+=======
+        render?: (value: unknown, row: T) => React.ReactNode;
+    }>;
+    data: T[];
+    onRowClick?: (row: T) => void;
+}
+
+// API Response interfaces
+export interface ContractAPIResponse {
+    id: number;
+    roomId: number;
+    tenantName: string;
+    startDate: string;
+    endDate: string;
+    price: number;
+    status: number;
+    fileUrl: string;
+    createdAt: string;
+    houseName: string;
+    roomNumber: string;
+}
+
+export interface NearExpiryContractListItem {
+    id: string;
+    tenantName: string;
+    houseName: string;
+    roomNumber: string;
+    endDate: string;
+    remainingDays: number;
+}
+
+export interface AbnormalReadingAPIResponse {
+    id: number;
+    cycleId: number;
+    electricOld: number;
+    electricNew: number;
+    electricPhotoUrl: string;
+    waterOld: number;
+    waterNew: number;
+    waterPhotoUrl: string;
+    status: number;
+    createdAt: string;
+    updatedAt: string;
+    tenantContractId: number;
+    houseName: string;
+    roomName: string;
+    floor: number;
+    tenantName: string;
+    tenantId: string;
+>>>>>>> origin/main
 }

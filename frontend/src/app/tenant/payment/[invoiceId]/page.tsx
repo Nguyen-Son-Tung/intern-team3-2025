@@ -1,5 +1,6 @@
 "use client";
 
+<<<<<<< HEAD
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getInvoiceDetail } from '@/services/invoiceService';
@@ -16,12 +17,20 @@ interface PaymentResponse {
     orderId?: string;
     qrCode?: string;
 }
+=======
+import React from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { usePayment } from '@/hooks/usePayment';
+import { PAYMENT_MESSAGES } from '@/constants/payment';
+import { LoadingSpinner, ErrorDisplay, InvoiceDetails, PaymentSection } from '@/components/payment';
+>>>>>>> origin/main
 
 const PaymentPage: React.FC = () => {
     const params = useParams();
     const router = useRouter();
     const invoiceId = params.invoiceId as string;
 
+<<<<<<< HEAD
     const [invoice, setInvoice] = useState<Invoice | null>(null);
     const [userName, setUserName] = useState<string>('');
     const [loading, setLoading] = useState(true);
@@ -237,6 +246,28 @@ const PaymentPage: React.FC = () => {
     const dueDate = new Date(invoice.dueDate);
     const isOverdue = dueDate < new Date();
 
+=======
+    const {
+        invoice,
+        userName,
+        loading,
+        processing,
+        error,
+        paymentQR,
+        orderId,
+        paymentSuccess,
+        handleCreatePayment
+    } = usePayment(invoiceId);
+
+    if (loading) {
+        return <LoadingSpinner message={PAYMENT_MESSAGES.LOADING_INVOICE} />;
+    }
+
+    if (error || !invoice) {
+        return <ErrorDisplay error={error || 'Unknown error'} />;
+    }
+
+>>>>>>> origin/main
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-8">
             <div className="max-w-4xl mx-auto">
@@ -252,6 +283,7 @@ const PaymentPage: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<<<<<<< HEAD
                     {/* Invoice Details */}
                     <div className="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
                         <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
@@ -434,6 +466,19 @@ const PaymentPage: React.FC = () => {
                             )}
                         </div>
                     </div>
+=======
+                    <InvoiceDetails invoice={invoice} userName={userName} />
+
+                    <PaymentSection
+                        invoice={invoice}
+                        processing={processing}
+                        error={error}
+                        paymentQR={paymentQR}
+                        orderId={orderId}
+                        paymentSuccess={paymentSuccess}
+                        onCreatePayment={handleCreatePayment}
+                    />
+>>>>>>> origin/main
                 </div>
             </div>
         </div>

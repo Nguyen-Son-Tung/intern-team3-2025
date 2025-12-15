@@ -8,7 +8,12 @@ namespace PropertyService.DTOs.Contracts
         public int Id { get; set; }
         public int RoomId { get; set; }
         [Required]
+<<<<<<< HEAD
         public Guid TenantId { get; set; }
+=======
+        public required string TenantId { get; set; }
+        public string? TenantName { get; set; }
+>>>>>>> origin/main
         public DateOnly StartDate { get; set; }
         public DateOnly? EndDate { get; set; } 
         public decimal Price { get; set; }
@@ -16,6 +21,10 @@ namespace PropertyService.DTOs.Contracts
         public string? FileUrl { get; set; }
         public DateTime CreatedAt { get; set; }
         public string? HouseName { get; set; } 
+<<<<<<< HEAD
         public string? RoomNumber { get; set; } 
+=======
+        public string? RoomName { get; set; } 
+>>>>>>> origin/main
     }
 }

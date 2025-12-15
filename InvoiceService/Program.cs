@@ -7,9 +7,19 @@ using Microsoft.IdentityModel.Tokens;
 using InvoiceService.Repositories.Interfaces; 
 using InvoiceService.Repositories.Implementations;
 using InvoiceService.Features.Property;
+<<<<<<< HEAD
 using System.Text;
 using InvoiceService.Services;
 // using RabbitMQ.Client;
+=======
+using Quartz;
+using InvoiceService.Jobs;
+using System.Text;
+using InvoiceService.Services;
+using Quartz;
+using InvoiceService.Jobs;
+
+>>>>>>> origin/main
 var builder = WebApplication.CreateBuilder(args);
 
 // Đọc JwtSettings từ cấu hình
@@ -57,8 +67,27 @@ builder.Services.AddScoped<IPricingService, PricingService>();
 builder.Services.AddHttpClient<InvoiceService.Services.IUserServiceClient, InvoiceService.Services.UserServiceClient>();
 builder.Services.AddHttpClient<IPropertyService, PropertyServiceClientImpl>();
 builder.Services.AddSingleton<InvoiceService.Services.PaymentWebSocketHandler>();
+<<<<<<< HEAD
 // builder.Services.AddSingleton<IRabbitMQPublisher, RabbitMQPublisher>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+=======
+builder.Services.AddScoped<IInvoiceReminderService, InvoiceReminderService>();
+builder.Services.AddScoped<IMessageProducer,RabbitMQProducer>();
+
+// Configure Quartz for scheduled jobs
+builder.Services.AddQuartz(q =>
+{
+    var jobKey = new JobKey("InvoiceVisibilityJob");
+    q.AddJob<InvoiceVisibilityJob>(opts => opts.WithIdentity(jobKey));
+
+    q.AddTrigger(opts => opts
+        .ForJob(jobKey)
+        .WithIdentity("InvoiceVisibilityTrigger")
+        .WithCronSchedule("0 0 3 25 * ?")); // Chạy vào ngày 25 hàng tháng lúc 3 giờ 00:00
+});
+
+builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+>>>>>>> origin/main
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -69,15 +98,46 @@ builder.Services.AddSwaggerGen(options =>
         Description = "API for managing invoices with tenant-based payment tracking"
     });
 });
+// ⭐️ CẤU HÌNH QUARTZ cho Invoice Service
+builder.Services.AddQuartz(q =>
+{
+    q.UseMicrosoftDependencyInjectionJobFactory();
 
-// Add CORS
+    // 1. Đăng ký Job Child: Payment Reminder
+    var paymentJobKey = new JobKey("PaymentReminderJob");
+    q.AddJob<PaymentReminderJob>(j => j.WithIdentity(paymentJobKey).StoreDurably());
+
+    // 2. Đăng ký Job Master: Invoice Reminder Scheduler
+    var masterJobKey = new JobKey("InvoiceReminderSchedulerJob");
+    q.AddJob<InvoiceReminderSchedulerJob>(j => j.WithIdentity(masterJobKey));
+
+    // 3. Lên lịch cho Job Master (Chạy mỗi phút để quét Owners và lên lịch lại)
+    q.AddTrigger(t => t
+        .ForJob(masterJobKey)
+        .WithIdentity("InvoiceReminderSchedulerTrigger")
+        .WithCronSchedule("0 0/1 * * * ?") // Chạy mỗi phút (hoặc theo lịch bạn muốn Master Job chạy)
+        .StartAt(DateTimeOffset.UtcNow.AddSeconds(10)) 
+    );
+});
+
+// ⭐️ THÊM HOSTED SERVICE QUARTZ
+builder.Services.AddQuartzHostedService(options =>
+{
+    options.WaitForJobsToComplete = true; // Đợi Job hoàn thành khi Shutdown
+});
+
+// Add Cors
+string allowedOrigins = builder.Configuration
+                             .GetSection("Cors:AllowedOrigins")
+                             .Get<string>() ?? string.Empty;
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowFE", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowCredentials();
     });
 });
 
@@ -101,15 +161,12 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAll");
+app.UseCors("AllowFE");
 
 // Enable WebSocket support
 app.UseWebSockets();

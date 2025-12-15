@@ -11,13 +11,25 @@ namespace InvoiceService.Repositories.Interfaces
         // Hàm Query đã có
         IQueryable<Invoice> Query(); 
         
+<<<<<<< HEAD
         // ⭐ BỔ SUNG CÁC HÀM CRUD BỊ THIẾU
+=======
+        //  BỔ SUNG CÁC HÀM CRUD BỊ THIẾU
+>>>>>>> origin/main
         Task AddAsync(Invoice entity);
         Task UpdateAsync(Invoice entity); // Cần để fix lỗi CS1061
         Task DeleteAsync(Invoice entity); // Cần để fix lỗi CS1061
         
         // Bạn có thể thêm GetByIdAsync (tùy chọn)
         Task<Invoice?> GetByIdAsync(int id);
+<<<<<<< HEAD
         // Task<Invoice?> GetOverdueInvoiceDetailsAsync(int id); // Lấy chi tiết hóa đơn quá hạn
+=======
+        Task<List<Invoice>> GetInvoicesByOwnerIdAsync(string ownerId);
+        // Task<Invoice?> GetOverdueInvoiceDetailsAsync(int id); // Lấy chi tiết hóa đơn quá hạn
+
+        Task<List<Invoice>> GetUnpaidInvoicesByUserIdAsync(string userId);
+        Task<List<Invoice>> GetInvoicesForReportAsync(DateTime startDate);
+>>>>>>> origin/main
     }
 }

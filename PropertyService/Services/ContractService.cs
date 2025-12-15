@@ -74,7 +74,11 @@ public class ContractService : IContractService
         return _mapper.Map<ContractDto>(contract);
     }
     
+<<<<<<< HEAD
     // ⭐ GET ALL CONTRACTS BY OWNER ID
+=======
+    //  GET ALL CONTRACTS BY OWNER ID
+>>>>>>> origin/main
     public async Task<IEnumerable<ContractDto>> GetAllByOwnerIdAsync(Guid ownerId)
     {
         var houses = await _houseService.GetHousesOwnedByAsync(ownerId); 
@@ -88,7 +92,11 @@ public class ContractService : IContractService
         return _mapper.Map<IEnumerable<ContractDto>>(contracts);
     }
     
+<<<<<<< HEAD
     // ⭐ GET BY ID (Dùng cho Controller check quyền)
+=======
+    //  GET BY ID (Dùng cho Controller check quyền)
+>>>>>>> origin/main
     public async Task<ContractDto?> GetByIdAsync(int contractId, Guid ownerId)
     {
         // Controller đã kiểm tra quyền sở hữu, ta chỉ cần lấy Contract
@@ -102,7 +110,11 @@ public class ContractService : IContractService
         return _mapper.Map<ContractDto>(contract);
     }
     
+<<<<<<< HEAD
     // ⭐ UPDATE CONTRACT
+=======
+    //  UPDATE CONTRACT
+>>>>>>> origin/main
     public async Task<ContractDto?> UpdateAsync(int id, UpdateContractDto dto, Guid ownerId)
     {
         var contract = await _contractRepo.GetByIdAsync(id);
@@ -120,7 +132,11 @@ public class ContractService : IContractService
         return _mapper.Map<ContractDto>(contract);
     }
     
+<<<<<<< HEAD
     // ⭐ DELETE CONTRACT
+=======
+    //  DELETE CONTRACT
+>>>>>>> origin/main
     public async Task<bool> DeleteAsync(int id, Guid ownerId)
     {
         var contract = await _contractRepo.GetByIdAsync(id);
@@ -134,13 +150,24 @@ public class ContractService : IContractService
     }
 
     // =================================================================
+<<<<<<< HEAD
     // ⭐ TRIỂN KHAI PHƯƠNG THỨC CŨ (ĐỂ KHỚP VỚI IContractService của bạn)
+=======
+    //  TRIỂN KHAI PHƯƠNG THỨC CŨ (ĐỂ KHỚP VỚI IContractService của bạn)
+>>>>>>> origin/main
     // =================================================================
 
     // Triển khai phương thức cũ cho ContractController.GetContract(int id)
     public async Task<ContractDto?> GetContractByIdAsync(int id)
     {
+<<<<<<< HEAD
         var contract = await _contractRepo.GetByIdAsync(id);
+=======
+        var contract = await _contractRepo.Query()
+            .Include(c => c.Room)
+            .ThenInclude(r => r.House)
+            .FirstOrDefaultAsync(c => c.Id == id);
+>>>>>>> origin/main
         return _mapper.Map<ContractDto>(contract);
     }
 
@@ -155,7 +182,11 @@ public class ContractService : IContractService
 
     public async Task<IEnumerable<ContractDto>> GetContractsByTenantIdAsync(Guid tenantId)
     {
+<<<<<<< HEAD
         // ⭐ DEBUG 3: KIỂM TRA REPOSITORY INJECTION ⭐
+=======
+        // DEBUG 3: KIỂM TRA REPOSITORY INJECTION 
+>>>>>>> origin/main
         // Đặt Breakpoint ở đây và kiểm tra xem _contractRepo có bị NULL không.
         if (_contractRepo == null)
         {
@@ -166,16 +197,28 @@ public class ContractService : IContractService
         
         string tenantIdString = tenantId.ToString();
 
+<<<<<<< HEAD
         // Sử dụng truy vấn đơn giản để loại bỏ lỗi Null Reference từ JOIN
         var contractsWithDetails = await _contractRepo.Query()
             .Where(c => c.TenantId == tenantIdString)
             
             // Truy vấn chỉ lấy các trường trực tiếp từ bảng Contract
+=======
+        // Use simple query to eliminate Null Reference error from JOIN
+        var contractsWithDetails = await _contractRepo.Query()
+            .Where(c => c.TenantId == tenantIdString)
+            
+            // Query only direct fields from Contract table
+>>>>>>> origin/main
             .Select(c => new ContractDto
             {
                 Id = c.Id,
                 RoomId = c.RoomId,
+<<<<<<< HEAD
                 TenantId = Guid.Parse(c.TenantId),
+=======
+                TenantId = c.TenantId,
+>>>>>>> origin/main
                 StartDate = c.StartDate,
                 EndDate = c.EndDate,
                 Price = c.Price,
@@ -183,11 +226,19 @@ public class ContractService : IContractService
                 FileUrl = c.FileUrl,
                 CreatedAt = c.CreatedAt,
                 
+<<<<<<< HEAD
                 // Đảm bảo không truy cập c.Room hoặc c.Room.House ở đây
             })
             .ToListAsync();
 
         // ⭐ DEBUG 4: KIỂM TRA KẾT QUẢ TRUY VẤN ⭐
+=======
+                // Ensure not to access c.Room or c.Room.House here
+            })
+            .ToListAsync();
+
+        //  DEBUG 4: KIỂM TRA KẾT QUẢ TRUY VẤN 
+>>>>>>> origin/main
         _logger.LogInformation("Successfully retrieved {Count} contracts for tenant {TenantId}", 
                             contractsWithDetails.Count, tenantId);
 
@@ -213,10 +264,17 @@ public class ContractService : IContractService
 
 
     // =================================================================
+<<<<<<< HEAD
     // ⭐ LOGIC KIỂM TRA QUYỀN SỞ HỮU
     // =================================================================
     
     // ⭐ KIỂM TRA QUYỀN SỞ HỮU ROOM
+=======
+    //  LOGIC KIỂM TRA QUYỀN SỞ HỮU
+    // =================================================================
+    
+    //  KIỂM TRA QUYỀN SỞ HỮU ROOM
+>>>>>>> origin/main
     public async Task<bool> IsRoomOwnedByAsync(int roomId, Guid ownerId)
     {
         var houseId = await _roomService.GetHouseIdByRoomIdAsync(roomId);
@@ -226,7 +284,11 @@ public class ContractService : IContractService
         return await _houseService.IsOwnedByAsync(houseId.Value, ownerId);
     }
 
+<<<<<<< HEAD
     // ⭐ KIỂM TRA QUYỀN SỞ HỮU CONTRACT
+=======
+    //  KIỂM TRA QUYỀN SỞ HỮU CONTRACT
+>>>>>>> origin/main
     public async Task<bool> IsContractOwnedByAsync(int contractId, Guid ownerId)
     {
         var contract = await _contractRepo.Query()
@@ -238,7 +300,11 @@ public class ContractService : IContractService
     }
     // PropertyService/Services/Implementations/ContractService.cs
 
+<<<<<<< HEAD
     public async Task<ContractDto?> GetActiveContractByTenantIdAsync(Guid tenantId)
+=======
+    public async Task<ContractDto?> GetActiveContractByTenantIdAsync(string tenantId)
+>>>>>>> origin/main
     {
         string tenantIdString = tenantId.ToString();
         // Lấy ngày hiện tại dưới dạng DateOnly
@@ -246,17 +312,29 @@ public class ContractService : IContractService
         
         var activeContract = await _contractRepo.Query()
             .Where(c => c.TenantId == tenantIdString)
+<<<<<<< HEAD
             // ⭐ LỌC HỢP ĐỒNG ĐANG HOẠT ĐỘNG
+=======
+            //  LỌC HỢP ĐỒNG ĐANG HOẠT ĐỘNG
+>>>>>>> origin/main
             // Giả định ContractStatus.ACTIVE là trạng thái hợp lệ.
             .Where(c => c.Status == ContractStatus.Active && 
                         (c.EndDate == null || c.EndDate >= today))
             
+<<<<<<< HEAD
             // ⭐ PROJECTION VÀ JOIN (Đã làm ở bước trước)
+=======
+            //  PROJECTION AND JOIN (Done in previous step)
+>>>>>>> origin/main
             .Select(c => new ContractDto
             {
                 Id = c.Id,
                 RoomId = c.RoomId,
+<<<<<<< HEAD
                 TenantId = Guid.Parse(c.TenantId),
+=======
+                TenantId = c.TenantId,
+>>>>>>> origin/main
                 StartDate = c.StartDate,
                 EndDate = c.EndDate,
                 Price = c.Price,
@@ -265,8 +343,13 @@ public class ContractService : IContractService
                 CreatedAt = c.CreatedAt,
                 
                 // Lấy thông tin JOIN từ Rooms và Houses
+<<<<<<< HEAD
                 HouseName = c.Room.House.Name, 
                 RoomNumber = c.Room.Name 
+=======
+                HouseName = c.Room!.House!.Name, 
+                RoomName = c.Room!.Name 
+>>>>>>> origin/main
             })
             .FirstOrDefaultAsync(); // Lấy 1 bản ghi duy nhất
 
@@ -290,26 +373,52 @@ public class ContractService : IContractService
         var expiringContracts = await _contractRepo.Query()
             .Include(c => c.Room)
             .ThenInclude(r => r.House)
+<<<<<<< HEAD
             .Where(c => c.Room != null && houseIds.Contains(c.Room.HouseId))
+=======
+            .Where(c => c.Room != null && houseIds.Contains(c.Room!.HouseId))
+>>>>>>> origin/main
             .Where(c => c.Status == ContractStatus.Active) // Chỉ lấy hợp đồng đang active
             .Where(c => c.EndDate != null && c.EndDate >= today && c.EndDate <= thresholdDate)
             .OrderBy(c => c.EndDate)
             .ToListAsync();
 
+<<<<<<< HEAD
+=======
+        // Fetch tenant names
+        var tenantIds = expiringContracts.Select(c => c.TenantId).Distinct().ToList();
+        var tenantTasks = tenantIds.Select(id => _userService.GetUserByIdAsync(id)).ToList();
+        var tenantResults = await Task.WhenAll(tenantTasks);
+        var tenantDict = tenantIds.Zip(tenantResults, (id, user) => new { id, user })
+            .ToDictionary(x => x.id, x => x.user?.TryGetValue("fullName", out var name) == true ? name?.ToString() ?? "Unknown" : "Unknown");
+
+        _logger.LogInformation("Fetched tenant names: {@TenantDict}", tenantDict);
+
+>>>>>>> origin/main
         // Map sang DTO sau khi đã load từ database
         return expiringContracts.Select(c => new ContractDto
         {
             Id = c.Id,
             RoomId = c.RoomId,
+<<<<<<< HEAD
             TenantId = Guid.TryParse(c.TenantId, out var tenantGuid) ? tenantGuid : Guid.Empty,
+=======
+            TenantId = c.TenantId,
+            TenantName = tenantDict.TryGetValue(c.TenantId, out var name) ? name : "Unknown",
+>>>>>>> origin/main
             StartDate = c.StartDate,
             EndDate = c.EndDate,
             Price = c.Price,
             Status = c.Status,
             FileUrl = c.FileUrl,
             CreatedAt = c.CreatedAt,
+<<<<<<< HEAD
             HouseName = c.Room?.House?.Name ?? string.Empty,
             RoomNumber = c.Room?.Name ?? string.Empty
+=======
+            HouseName = c.Room!.House!.Name ?? string.Empty,
+            RoomName = c.Room!.Name ?? string.Empty
+>>>>>>> origin/main
         }).ToList();
     }
 
@@ -324,7 +433,11 @@ public class ContractService : IContractService
             {
                 ContractId = c.Id,
                 HouseName = c.Room.House.Name,
+<<<<<<< HEAD
                 RoomName = c.Room.Name, // Giả định c.Room.Name là RoomNumber
+=======
+                RoomName = c.Room.Name, // Giả định c.Room.Name là RoomName
+>>>>>>> origin/main
                 Floor = c.Room.Floor // Giả định Room có thuộc tính Floor (int)
             })
             .FirstOrDefaultAsync();
@@ -346,9 +459,15 @@ public class ContractService : IContractService
             .Select(c => new PropertyDetailsDto
             {
                 ContractId = c.Id,
+<<<<<<< HEAD
                 HouseName = c.Room.House.Name,
                 RoomName = c.Room.Name, 
                 Floor = c.Room.Floor 
+=======
+                HouseName = c.Room!.House!.Name,
+                RoomName = c.Room!.Name, 
+                Floor = c.Room!.Floor 
+>>>>>>> origin/main
             })
             .ToListAsync();
 

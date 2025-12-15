@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+<<<<<<< HEAD
 using PropertyService;
 using System.Text;
 using PropertyService.Services;
@@ -44,6 +45,50 @@ builder.Services.AddCors(options =>
 // =============================
 // 3. JWT Authentication
 // =============================
+=======
+using Microsoft.OpenApi.Models;
+using PropertyService.Data;
+using PropertyService.Models;
+using PropertyService.Repositories;
+using PropertyService.Services;
+using PropertyService.Services.Clients;
+using PropertyService.Services.Interfaces;
+using System.Text;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// =====================
+// 1. DATABASE
+// =====================
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseMySql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
+    )
+);
+
+// =====================
+// 2. CORS (AN TOÀN, DEV DỄ CHẠY)
+// =====================
+// Add Cors
+string allowedOrigins = builder.Configuration
+                             .GetSection("Cors:AllowedOrigins")
+                             .Get<string>() ?? string.Empty;
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFE", policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+// =====================
+// 3. JWT AUTHENTICATION
+// =====================
+>>>>>>> origin/main
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -63,41 +108,62 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+<<<<<<< HEAD
 // =============================
 // 4. Swagger + JWT support
 // =============================
+=======
+// =====================
+// 4. SWAGGER
+// =====================
+>>>>>>> origin/main
 builder.Services.AddSwaggerGen(c =>
 {
-    c.AddSecurityDefinition("Bearer", new()
+    c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header
+        Title = "Property Service API",
+        Version = "v1"
     });
 
-    c.AddSecurityRequirement(new()
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Nhập token theo format: Bearer {token}"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            new OpenApiSecurityScheme
             {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                Reference = new OpenApiReference
                 {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Type = ReferenceType.SecurityScheme,
                     Id = "Bearer"
                 }
             },
-            new string[] {}
+            Array.Empty<string>()
         }
     });
 });
 
+<<<<<<< HEAD
 // =============================
 // 5. DI services
 // =============================
+=======
+// =====================
+// 5. DEPENDENCY INJECTION
+// =====================
+>>>>>>> origin/main
 builder.Services.AddAutoMapper(typeof(Program));
+
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+<<<<<<< HEAD
 
 builder.Services.AddScoped<IContractService, ContractService>();
 builder.Services.AddScoped<IHouseService, HouseService>();
@@ -120,17 +186,43 @@ builder.Services.AddHttpClient<IUserServiceClient, UserServiceClient>(client =>
 
     client.BaseAddress = new Uri(aaServiceUrl);
     // Header X-Service-Api-Key thường set trong UserServiceClient, không nhất thiết set ở đây
+=======
+builder.Services.AddScoped<IContractService, ContractService>();
+builder.Services.AddScoped<IHouseService, HouseService>();
+builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IPropertyQueryService, PropertyQueryService>();
+
+// HTTP Client → AA Service
+builder.Services.AddHttpClient<IUserServiceClient, UserServiceClient>(client =>
+{
+    var aaServiceUrl = builder.Configuration["ServiceUrls:AA"];
+
+    client.BaseAddress = new Uri(aaServiceUrl);
+>>>>>>> origin/main
 });
 
 builder.Services.AddControllers();
 
 var app = builder.Build();
 
+<<<<<<< HEAD
 // =============================
 // 7. Middleware pipeline
 // =============================
 app.UseSwagger();
 app.UseSwaggerUI();
+=======
+// =====================
+// 6. PIPELINE
+// =====================
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseCors("AllowFE");
+>>>>>>> origin/main
 
 app.UseCors("AllowAll");
 

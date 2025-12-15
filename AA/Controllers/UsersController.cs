@@ -30,6 +30,8 @@ public class UsersController : ControllerBase
         _logger = logger;
     }
 
+    // --- Service-to-Service Endpoints (Require API Key for S2S communication, but AllowAnonymous for route definition) ---
+
     /// <summary>
     /// Check if Tenant exists by ID (Service-to-service)
     /// </summary>
@@ -136,6 +138,175 @@ public class UsersController : ControllerBase
 
         return Ok(tenants);
     }
+    
+    /// <summary>
+    /// Get all tenants (users with OwnerId not null) (Service-to-service)
+    /// </summary>
+    [HttpGet("tenants")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetAllTenants()
+    {
+        // Validate service API key
+        var apiKey = Request.Headers["X-Service-Api-Key"].FirstOrDefault();
+        var configuredApiKey = _configuration["ServiceApiKey"];
+        
+        if (string.IsNullOrEmpty(apiKey) || apiKey != configuredApiKey)
+        {
+            _logger.LogWarning("Invalid or missing API key for GetAllTenants");
+            return Unauthorized(new { error = "Invalid or missing authentication" });
+        }
+
+        // Get all users where OwnerId is not null (tenants)
+        var tenants = await _userManager.Users
+            .Where(u => u.OwnerId != null)
+            .Select(u => new
+            {
+                id = u.Id,
+                fullName = u.FullName,
+                email = u.Email,
+                ownerId = u.OwnerId
+            })
+            .ToListAsync();
+
+        return Ok(tenants);
+    }
+
+    /// <summary>
+    /// Get batch user information by IDs (Service-to-service)
+    /// </summary>
+    [HttpPost("batch-info")] // ROUTE CẦN THIẾT
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(List<object>), 200)] 
+    public async Task<IActionResult> GetUsersBatch([FromBody] List<string> userIds)
+    {
+        // Validate service API key (Same logic as other Service-to-Service endpoints)
+        var apiKey = Request.Headers["X-Service-Api-Key"].FirstOrDefault();
+        var configuredApiKey = _configuration["ServiceApiKey"];
+        
+        if (string.IsNullOrEmpty(apiKey) || apiKey != configuredApiKey)
+        {
+            _logger.LogWarning("Invalid or missing API key for GetUsersBatch");
+            return Unauthorized(new { error = "Invalid or missing authentication" });
+        }
+        
+        // Lấy thông tin chi tiết của các users dựa trên userIds
+        var users = await _userManager.Users
+            .Where(u => userIds.Contains(u.Id))
+            .Select(u => new
+            {
+                id = u.Id,
+                fullName = u.FullName,
+                email = u.Email,
+                ownerId = u.OwnerId
+            })
+            .ToListAsync();
+
+        return Ok(users);
+    }
+
+    /// <summary>
+    /// Get Owner ID by Tenant ID (Service-to-service)
+    /// </summary>
+    [HttpGet("tenant/{tenantId}/owner-id")] 
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(string), 200)] 
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetOwnerIdByTenantId(string tenantId)
+    {
+        // Validate service API key (Giống các hàm Service-to-Service khác)
+        var apiKey = Request.Headers["X-Service-Api-Key"].FirstOrDefault();
+        var configuredApiKey = _configuration["ServiceApiKey"];
+        
+        if (string.IsNullOrEmpty(apiKey) || apiKey != configuredApiKey)
+        {
+            _logger.LogWarning("Invalid or missing API key for GetOwnerIdByTenantId");
+            return Unauthorized(new { error = "Invalid or missing authentication" });
+        }
+
+        // 1. Tìm Tenant bằng ID
+        var tenant = await _userManager.FindByIdAsync(tenantId);
+        
+        if (tenant == null)
+        {
+            return NotFound(new { error = $"Tenant with ID {tenantId} not found" });
+        }
+
+        // 2. Trả về OwnerId
+        if (string.IsNullOrEmpty(tenant.OwnerId))
+        {
+            // Tenant này không có Owner (có thể là chính Owner hoặc Admin)
+            return NotFound(new { error = $"User {tenantId} is not a tenant (OwnerId is null)" }); 
+        }
+
+        // Trả về Owner ID dưới dạng string thuần
+        return Ok(tenant.OwnerId); 
+    }
+
+    /// <summary>
+    /// Get all Owner IDs (Service-to-service)
+    /// </summary>
+    [HttpGet("owners")] 
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(List<string>), 200)]
+    public async Task<IActionResult> GetAllOwnerIds()
+    {
+        // 1. Validate service API key
+        var apiKey = Request.Headers["X-Service-Api-Key"].FirstOrDefault();
+        var configuredApiKey = _configuration["ServiceApiKey"];
+        
+        if (string.IsNullOrEmpty(apiKey) || apiKey != configuredApiKey)
+        {
+            _logger.LogWarning("Invalid or missing API key for GetAllOwnerIds");
+            return Unauthorized(new { error = "Invalid or missing authentication" });
+        }
+
+        try
+        {
+            // 2. Sử dụng UserManager để lấy tất cả người dùng thuộc vai trò 'Owner'
+            var owners = await _userManager.GetUsersInRoleAsync("Owner");
+
+            // 3. Chọn ra chỉ Id và trả về
+            var ownerIds = owners.Select(u => u.Id).ToList();
+            
+            _logger.LogInformation("Successfully retrieved {Count} Owner IDs.", ownerIds.Count);
+
+            // Trả về danh sách IDs (List<string>)
+            return Ok(ownerIds); 
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving all Owner IDs.");
+            return StatusCode(500, new { error = "Internal server error when fetching Owner IDs" });
+        }
+    }
+
+    /// <summary>
+    /// Get OwnerId of a user (Service-to-service)
+    /// </summary>
+    [HttpGet("{userId}/owner")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetUserOwnerId(string userId)
+    {
+        // Validate service API key
+        var apiKey = Request.Headers["X-Service-Api-Key"].FirstOrDefault();
+        var configuredApiKey = _configuration["ServiceApiKey"];
+        
+        if (string.IsNullOrEmpty(apiKey) || apiKey != configuredApiKey)
+        {
+            _logger.LogWarning("Invalid or missing API key for GetUserOwnerId");
+            return Unauthorized(new { error = "Invalid or missing authentication" });
+        }
+
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return NotFound(new { error = $"User with ID {userId} not found" });
+        }
+
+        return Ok(new { OwnerId = user.OwnerId });
+    }
+
+    // --- Owner-Only Endpoints (Require JWT Auth and "Owner" role) ---
 
     /// <summary>
     /// Tạo người dùng mới (chỉ Owner)
@@ -256,30 +427,5 @@ public class UsersController : ControllerBase
                 Message = "Đã xảy ra lỗi khi xóa người dùng"
             });
         }
-    }
-
-    /// <summary>
-    /// Get batch user information by IDs (Service-to-service)
-    /// </summary>
-    [HttpPost("batch-info")] // ⭐ ROUTE CẦN THIẾT
-    [AllowAnonymous]
-    [ProducesResponseType(typeof(List<object>), 200)] 
-    public async Task<IActionResult> GetUsersBatch([FromBody] List<string> userIds)
-    {
-        // ... (logic xác thực API key) ...
-        
-        // Lấy thông tin chi tiết của các users dựa trên userIds
-        var users = await _userManager.Users
-            .Where(u => userIds.Contains(u.Id))
-            .Select(u => new
-            {
-                id = u.Id,
-                fullName = u.FullName,
-                email = u.Email,
-                ownerId = u.OwnerId
-            })
-            .ToListAsync();
-
-        return Ok(users);
     }
 }

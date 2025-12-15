@@ -5,7 +5,11 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+<<<<<<< HEAD
 using PropertyService;
+=======
+using PropertyService.Data;
+>>>>>>> origin/main
 
 #nullable disable
 

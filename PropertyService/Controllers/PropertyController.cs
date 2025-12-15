@@ -16,21 +16,36 @@ public class PropertyController : ControllerBase
     private readonly IConfiguration _configuration; 
     private readonly ILogger<PropertyController> _logger; 
     
+<<<<<<< HEAD
     // ⭐ ĐÃ THÊM: Khai báo Service cần thiết
     private readonly IContractService _contractService; 
 
     // ⭐ ĐÃ SỬA: Inject IContractService vào Constructor
+=======
+    //  ĐÃ THÊM: Khai báo Service cần thiết
+    private readonly IContractService _contractService; 
+
+    //  ĐÃ SỬA: Inject IContractService vào Constructor
+>>>>>>> origin/main
     public PropertyController(
         IPropertyQueryService queryService, 
         IConfiguration configuration, 
         ILogger<PropertyController> logger,
+<<<<<<< HEAD
         IContractService contractService // ⭐ Inject Contract Service
+=======
+        IContractService contractService //  Inject Contract Service
+>>>>>>> origin/main
     )
     {
         _queryService = queryService;
         _configuration = configuration;
         _logger = logger;
+<<<<<<< HEAD
         _contractService = contractService; // ⭐ Gán giá trị
+=======
+        _contractService = contractService; //  Gán giá trị
+>>>>>>> origin/main
     }
 
     // Endpoint mới để tra cứu chi tiết Property bằng Contract ID (Đã có)
@@ -48,11 +63,19 @@ public class PropertyController : ControllerBase
         
         var results = await _queryService.GetDetailsByContractIdsAsync(contractIds);
         
+<<<<<<< HEAD
         _logger.LogWarning("🔥 Final Output Check: Returning {Count} Property details based on Contracts.", results.Count);
         return Ok(results);
     }
 
     // ⭐ HÀM MỚI: Get Active Contract ID for Service-to-Service
+=======
+        _logger.LogWarning(" Final Output Check: Returning {Count} Property details based on Contracts.", results.Count);
+        return Ok(results);
+    }
+
+    //  HÀM MỚI: Get Active Contract ID for Service-to-Service
+>>>>>>> origin/main
     // URL: GET api/property/active-id/{userId}
     [HttpGet("active-id/{userId}")]
     [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
@@ -60,29 +83,51 @@ public class PropertyController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<int?>> GetActiveContractIdForService(string userId)
     {
+<<<<<<< HEAD
         // ⭐ LƯU Ý BẢO MẬT: Bạn nên thêm cơ chế kiểm tra API Key/Header Service-to-Service tại đây.
         
         if (!Guid.TryParse(userId, out var tenantId)) 
         {
              _logger.LogWarning("Invalid User ID format received: {UserId}", userId);
              return BadRequest("Invalid User ID format.");
+=======
+        //  LƯU Ý BẢO MẬT: Bạn nên thêm cơ chế kiểm tra API Key/Header Service-to-Service tại đây.
+        
+        // Validate userId - allow custom formats, not just GUID
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+             _logger.LogWarning("Empty User ID received");
+             return BadRequest("User ID cannot be empty.");
+>>>>>>> origin/main
         }
         
         try
         {
             // 1. Gọi hàm Service đã có
             // Lưu ý: Hàm này trả về ContractDto. Ta chỉ lấy Id.
+<<<<<<< HEAD
             var contract = await _contractService.GetActiveContractByTenantIdAsync(tenantId);
             
             if (contract == null) 
             {
                  _logger.LogInformation("No active contract found for user ID: {TenantId}", tenantId);
+=======
+            var contract = await _contractService.GetActiveContractByTenantIdAsync(userId);
+            
+            if (contract == null) 
+            {
+                 _logger.LogInformation("No active contract found for user ID: {UserId}", userId);
+>>>>>>> origin/main
                 // Trả về 204 No Content nếu không tìm thấy
                 return NoContent(); 
             }
             
             // 2. Trả về Contract ID đơn thuần (int)
+<<<<<<< HEAD
             _logger.LogInformation("Active Contract ID found: {ContractId} for user ID: {TenantId}", contract.Id, tenantId);
+=======
+            _logger.LogInformation("Active Contract ID found: {ContractId} for user ID: {UserId}", contract.Id, userId);
+>>>>>>> origin/main
             return Ok(contract.Id); 
         }
         catch (Exception ex)
@@ -91,4 +136,44 @@ public class PropertyController : ControllerBase
             return StatusCode(500, "Internal server error during contract lookup.");
         }
     }
+<<<<<<< HEAD
+=======
+
+    // HÀM MỚI: Get Tenant Contract by ID for Service-to-Service
+    // URL: GET api/property/contracts/{contractId}
+    [HttpGet("contracts/{contractId}")]
+    [ProducesResponseType(typeof(PropertyService.DTOs.Contracts.ContractDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PropertyService.DTOs.Contracts.ContractDto>> GetTenantContractById(int contractId)
+    {
+        // KIỂM TRA API KEY CHO SERVICE-TO-SERVICE
+        var apiKey = Request.Headers["X-Service-Api-Key"].FirstOrDefault();
+        var configuredApiKey = _configuration["ServiceApiKey"];
+        if (string.IsNullOrEmpty(apiKey) || apiKey != configuredApiKey)
+        {
+            _logger.LogWarning("Unauthorized access attempt to GetTenantContractById without valid API key");
+            return Unauthorized("Invalid or missing service API key");
+        }
+
+        try
+        {
+            var contract = await _contractService.GetContractByIdAsync(contractId);
+
+            if (contract == null)
+            {
+                _logger.LogWarning("Contract with ID {ContractId} not found", contractId);
+                return NotFound();
+            }
+
+            _logger.LogInformation("Retrieved contract details for Contract ID: {ContractId}", contractId);
+            return Ok(contract);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting contract details for Contract ID {ContractId}", contractId);
+            return StatusCode(500, "Internal server error during contract lookup.");
+        }
+    }
+>>>>>>> origin/main
 }

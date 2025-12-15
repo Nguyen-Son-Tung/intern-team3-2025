@@ -19,10 +19,15 @@ public class UserService : IUserService
         _logger = logger;
         _configuration = configuration;
         
+<<<<<<< HEAD
         var baseUrl = configuration ["AuthService:BaseUrl"] 
             ?? throw new InvalidOperationException("AuthService:BaseUrl not configured");
         _httpClient.BaseAddress = new Uri(baseUrl);
         
+=======
+        // BaseAddress is already configured in Program.cs HttpClient registration
+        // Add API key header
+>>>>>>> origin/main
         var apiKey = configuration["AuthService:ApiKey"] ?? configuration["ServiceApiKey"];
         if (!string.IsNullOrEmpty(apiKey))
         {
@@ -96,4 +101,109 @@ public class UserService : IUserService
             return new List<UserInfo>();
         }
     }
+<<<<<<< HEAD
+=======
+
+    // ⭐️ TRIỂN KHAI HÀM LẤY OWNER ID ⭐️
+    public async Task<string?> GetOwnerIdByTenantIdAsync(string tenantId)
+    {
+        try
+        {
+            // Giả định AA Service có endpoint /api/users/tenant/{tenantId}/owner-id
+            var response = await _httpClient.GetAsync($"/api/users/tenant/{tenantId}/owner-id");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                // Server trả về string ID thuần, không cần Deserialize phức tạp
+                return content.Trim('"'); // Loại bỏ dấu nháy kép nếu response là JSON string
+            }
+            
+            _logger.LogWarning("Failed to get owner ID for tenant {TenantId}. Status: {StatusCode}", tenantId, response.StatusCode);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error calling AuthService to get owner ID for tenant {TenantId}", tenantId);
+            return null;
+        }
+    }
+
+    // ⭐️ TRIỂN KHAI HÀM LẤY EMAIL OWNER ⭐️
+    public async Task<string?> GetEmailByUserIdAsync(string userId)
+    {
+        try
+        {
+            // AA Service có endpoint /api/users/{userId} và trả về DTO
+            var response = await _httpClient.GetAsync($"/api/users/{userId}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                
+                // Endpoint /api/users/{userId} trả về object có chứa 'email' (xem UsersController)
+                var userInfo = JsonSerializer.Deserialize<UserInfo>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                
+                return userInfo?.Email;
+            }
+
+            _logger.LogWarning("Failed to get email for user {UserId}. Status: {StatusCode}", userId, response.StatusCode);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error calling AuthService to get email for user {UserId}", userId);
+            return null;
+        }
+    }
+
+    public async Task<List<string>> GetAllOwnerIdsAsync()
+    {
+        try
+        {
+            _logger.LogInformation("Calling AAService to retrieve all active Owner IDs.");
+
+            // Endpoint này giả định được thiết kế để chỉ trả về danh sách Owner có Tenants đang Active
+            var response = await _httpClient.GetAsync("api/users/owners");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                
+                // Giả định API trả về List<string>
+                var ownerIds = JsonSerializer.Deserialize<List<string>>(
+                    content, 
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                );
+
+                if (ownerIds == null || ownerIds.Count == 0)
+                {
+                    _logger.LogWarning("AAService returned 0 active Owner IDs.");
+                }
+
+                return ownerIds ?? new List<string>();
+            }
+            else
+            {
+                _logger.LogError("Failed to retrieve Owner IDs from AAService. Status Code: {StatusCode}", response.StatusCode);
+                return new List<string>();
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "HTTP request failed while retrieving Owner IDs from AAService.");
+            return new List<string>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unexpected error occurred while processing GetAllOwnerIdsAsync.");
+            return new List<string>();
+        }
+    }
+
+    
+>>>>>>> origin/main
 }

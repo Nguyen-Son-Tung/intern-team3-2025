@@ -10,11 +10,22 @@ namespace InvoiceService.Features.Invoice;
 
 public interface IInvoiceService
 {
+<<<<<<< HEAD
 // Các hàm cũ
     Task<IEnumerable<InvoiceResponse>> GetAllInvoicesByUserAsync(string userId);
     Task<IEnumerable<InvoiceResponse>> GetAllInvoicesByOwnerAsync(string ownerId, List<string> tenantUserIds);
     Task<InvoiceResponse?> GetInvoiceByIdAsync(int id, string userId);
     Task<InvoiceResponse?> GetInvoiceByIdAsync(int id); 
+=======
+// Old functions
+    Task<IEnumerable<InvoiceResponse>> GetAllInvoicesByUserAsync(string userId);
+    Task<IEnumerable<InvoiceResponse>> GetAllInvoicesByOwnerAsync(string ownerId, List<string> tenantUserIds);
+    Task<IEnumerable<InvoiceResponse>> GetAllInvoicesByOwnerAsync(string ownerId, List<string> tenantUserIds, int page, int pageSize, string? status, int? year, int? month);
+    Task<IEnumerable<InvoiceResponse>> GetInvoicesByTenantAsync(string tenantId, int page, int pageSize, string? status, int? year, int? month);
+    Task<InvoiceResponse?> GetInvoiceByIdAsync(int id, string userId);
+    Task<InvoiceResponse?> GetInvoiceByIdAsync(int id);
+    Task<InvoiceResponse?> GetInvoiceByIdForOwnerAsync(int id, string ownerId, List<string> tenantUserIds); 
+>>>>>>> origin/main
     Task<Models.Invoice> CreateInvoiceAsync(Models.Invoice invoice);
     Task<Models.Invoice?> UpdateInvoiceAsync(int id, Models.Invoice invoice, string userId);
     Task<bool> DeleteInvoiceAsync(int id, string userId);
@@ -23,7 +34,16 @@ public interface IInvoiceService
     Task<IEnumerable<InvoiceResponse>> GetInvoicesByStatusAsync(string userId, string status);
     Task<IEnumerable<InvoiceResponse>> GetInvoicesByStatusForOwnerAsync(string ownerId, List<string> tenantUserIds, string status);
    
+<<<<<<< HEAD
     // ⭐ CÁC HÀM MỚI (Cần đảm bảo DTOs này được giải quyết bằng using đã chọn)
     Task<UnpaidInvoicesResponseDto> GetUnpaidInvoicesByTenantIdAsync(Guid tenantId);
     Task<TotalPaidLastMonthDto> GetTotalPaidAmountLastMonthAsync(Guid tenantId);
+=======
+    //  NEW FUNCTIONS (Ensure DTOs are resolved with selected using)
+    Task<UnpaidInvoicesResponseDto> GetUnpaidInvoicesByTenantIdAsync(Guid tenantId);
+    Task<TotalPaidLastMonthDto> GetTotalPaidAmountLastMonthAsync(Guid tenantId);
+    Task<IEnumerable<PendingInvoiceDto>> GetPendingInvoicesThisMonthAsync(string ownerId);
+
+    Task<List<MonthlyRevenueDataPoint>> GetMonthlyRevenueReportAsync(string ownerId, int lastMonths = 6);
+>>>>>>> origin/main
 }

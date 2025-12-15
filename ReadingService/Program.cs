@@ -6,16 +6,28 @@ using ReadingService.Features.User;
 using ReadingService.Features.Property;
 using ReadingService.Repositories.Interfaces;
 using ReadingService.Repositories.Implementations;
+<<<<<<< HEAD
 
 using Microsoft.EntityFrameworkCore; // Microsoft Usings
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
 using Amazon.S3; // Third-party Usings
+=======
+using Quartz;
+using ReadingService.Jobs;
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+
+using Amazon.S3;
+>>>>>>> origin/main
 using Amazon.Runtime;
 using Amazon;
 
 using System.Text;
+<<<<<<< HEAD
 using System; // System Usings (thường đặt trên cùng, nhưng tôi đặt lại để nhóm các usings)
 // --- Khởi tạo Builder ---
 
@@ -25,17 +37,30 @@ var builder = WebApplication.CreateBuilder(args);
 //                             1. ĐĂNG KÝ DỊCH VỤ (builder.Services.Add...)
 // ====================================================================
 
+=======
+using System; 
+
+var builder = WebApplication.CreateBuilder(args);
+
+>>>>>>> origin/main
 // Cấu hình Database Context
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))));
 
+<<<<<<< HEAD
 // Cấu hình CORS
 string[] allowedOrigins = builder.Configuration
                              .GetSection("Cors:AllowedOrigins")
                              .Get<string[]>() ?? Array.Empty<string>();
 
+=======
+// Add Cors
+string allowedOrigins = builder.Configuration
+                             .GetSection("Cors:AllowedOrigins")
+                             .Get<string>() ?? string.Empty;
+>>>>>>> origin/main
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFE", policy =>
@@ -47,6 +72,56 @@ builder.Services.AddCors(options =>
     });
 });
 
+<<<<<<< HEAD
+=======
+// Thêm Quartz.NET
+builder.Services.AddQuartz(q =>
+{
+    q.UseMicrosoftDependencyInjectionJobFactory();
+
+    // ⭐️ Thay thế UsePersistentStore bằng q.UseInMemoryStore();
+    q.UseInMemoryStore();
+
+    // ------------------------------------------------------------------
+    // A. JOB TẠO CYCLE (STATIC - Ngày 20)
+    // CÁC STATIC JOB VÀ TRIGGER NÀY VẪN ĐƯỢC QUARTZ TỰ TẠO LẠI KHI KHỞI ĐỘNG
+    // ------------------------------------------------------------------
+    var cycleJobKey = new JobKey(nameof(AutoCreateReadingCycleJob));
+    q.AddJob<AutoCreateReadingCycleJob>(opts => opts.WithIdentity(cycleJobKey));
+    
+    q.AddTrigger(opts => opts
+        .ForJob(cycleJobKey)
+        .WithIdentity("AutoCreateCycle-Trigger-20th")
+        .WithCronSchedule("0 0 2 20 * ?")); // 02:00 AM ngày 20 hàng tháng
+
+    // ------------------------------------------------------------------
+    // B. MASTER SCHEDULER (STATIC - Chạy hàng ngày)
+    // ------------------------------------------------------------------
+    var schedulerJobKey = new JobKey(nameof(ReminderSchedulerJob));
+    q.AddJob<ReminderSchedulerJob>(opts => opts.WithIdentity(schedulerJobKey));
+    
+    q.AddTrigger(opts => opts
+        .ForJob(schedulerJobKey)
+        .WithIdentity("DynamicReminder-Scheduler-Trigger")
+        // .WithCronSchedule("0 30 1 * * ?")); // 01:30 AM hàng ngày
+        .StartNow() // Bắt đầu ngay khi Service chạy
+        .WithSimpleSchedule(x => x
+        .WithRepeatCount(0) // Chỉ chạy 1 lần
+        .WithIntervalInSeconds(5))); // Sau 5 giây
+
+    // ------------------------------------------------------------------
+    // C. CHILD JOB (DYNAMIC - Job Nhắc Nộp Chỉ Số)
+    // ------------------------------------------------------------------
+    q.AddJob<ReadingReminderJob>(opts => opts.WithIdentity(nameof(ReadingReminderJob)).StoreDurably());
+});
+
+// Thêm dịch vụ Quartz để chạy Scheduler
+builder.Services.AddQuartzHostedService(options =>
+{
+    options.WaitForJobsToComplete = true; 
+});
+
+>>>>>>> origin/main
 // Cấu hình AWS S3 Service
 var awsAccessKey = builder.Configuration["AWS:AccessKey"];
 var awsSecretKey = builder.Configuration["AWS:SecretKey"];
@@ -93,6 +168,7 @@ if (!string.IsNullOrEmpty(secretKey))
         };
     });
 }
+<<<<<<< HEAD
 builder.Services.AddAuthorization(); // Thêm Authorization
 
 // Đăng ký Repositories (I...Repository)
@@ -100,24 +176,71 @@ builder.Services.AddScoped<IReadingCycleRepository, ReadingCycleRepository>();
 builder.Services.AddScoped<IMonthlyReadingRepository, MonthlyReadingRepository>();
 
 // Đăng ký Services & HttpClients (I...Service)
+=======
+builder.Services.AddAuthorization(); // Add Authorization
+
+// Register Repositories (I...Repository)
+builder.Services.AddScoped<IReadingCycleRepository, ReadingCycleRepository>();
+builder.Services.AddScoped<IMonthlyReadingRepository, MonthlyReadingRepository>();
+
+// Register Services & HttpClients (I...Service)
+>>>>>>> origin/main
 builder.Services.AddScoped<IS3Service, S3Service>();
 builder.Services.AddScoped<IMonthlyReadingService, MonthlyReadingService>();
 builder.Services.AddScoped<IReadingCycleService, ReadingCycleService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
+<<<<<<< HEAD
 // Đăng ký HttpClients (I...HttpClient)
 builder.Services.AddHttpClient<IInvoiceHttpClient, InvoiceHttpClient>();
 builder.Services.AddHttpClient<IPropertyService, PropertyService>();
 
 
 // Cấu hình Controllers, Swagger/OpenAPI (Thường đặt cuối phần Services)
+=======
+builder.Services.AddScoped<IMessageProducer, RabbitMQProducer>();
+
+// Register IUserService with configured HttpClient
+builder.Services.AddHttpClient<IUserService, UserService>(client => 
+{ 
+    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:AAService"]); 
+});
+
+// Register HttpClients (I...HttpClient)
+builder.Services.AddHttpClient<IInvoiceHttpClient, InvoiceHttpClient>();
+builder.Services.AddHttpClient<IPropertyService, PropertyService>();
+
+// Register HttpClient for AA service
+builder.Services.AddHttpClient("AA", client => 
+{ 
+    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:AAService"]); 
+});
+
+// Configure Controllers, Swagger/OpenAPI (Usually placed at the end of Services section)
+>>>>>>> origin/main
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+<<<<<<< HEAD
 // ====================================================================
 //                             2. CẤU HÌNH PIPELINE (app.Use...)
 // ====================================================================
+=======
+// Configure Quartz for scheduled jobs
+builder.Services.AddQuartz(q =>
+{
+    var jobKey = new JobKey("AutoInvoiceJob");
+    q.AddJob<AutoInvoiceJob>(opts => opts.WithIdentity(jobKey));
+
+    q.AddTrigger(opts => opts
+        .ForJob(jobKey)
+        .WithIdentity("AutoInvoiceTrigger")
+        .WithCronSchedule("0 0 0 25 * ?")); // Chạy vào ngày 25 hàng tháng lúc 00:00
+});
+
+builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+>>>>>>> origin/main
 
 var app = builder.Build();
 
@@ -138,6 +261,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+<<<<<<< HEAD
 // Cấu hình HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -149,6 +273,17 @@ app.UseHttpsRedirection();
 app.UseRouting(); // Tùy chọn, nhưng nên có trước CORS, Auth/Authz
 
 app.UseCors("AllowFE"); // CORS phải đứng trước UseAuthentication/UseAuthorization
+=======
+
+// Configure the HTTP request pipeline.
+app.UseSwagger();
+app.UseSwaggerUI();
+
+app.UseHttpsRedirection();
+app.UseRouting();
+
+app.UseCors("AllowFE");
+>>>>>>> origin/main
 
 app.UseAuthentication();
 app.UseAuthorization();

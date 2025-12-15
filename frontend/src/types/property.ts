@@ -1,7 +1,10 @@
 export enum RoomStatus {
   Vacant = 0,
   Occupied = 1,
+<<<<<<< HEAD
   ClosingSoon = 2,
+=======
+>>>>>>> origin/main
 }
 
 export interface House {

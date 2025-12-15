@@ -120,6 +120,7 @@ namespace PropertyService.Migrations
                     b.ToTable("Rooms");
                 });
 
+<<<<<<< HEAD
             modelBuilder.Entity("PropertyService.Models.Contract", b =>
                 {
                     b.HasOne("PropertyService.Models.Room", "Room")
@@ -129,6 +130,47 @@ namespace PropertyService.Migrations
                         .IsRequired();
 
                     b.Navigation("Room");
+=======
+            modelBuilder.Entity("PropertyService.Models.TenantContracts", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("FileUrl")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoomId");
+
+                    b.ToTable("TenantContracts");
+>>>>>>> origin/main
                 });
 
             modelBuilder.Entity("PropertyService.Models.Room", b =>
@@ -140,6 +182,17 @@ namespace PropertyService.Migrations
                         .IsRequired();
 
                     b.Navigation("House");
+                });
+
+            modelBuilder.Entity("PropertyService.Models.TenantContracts", b =>
+                {
+                    b.HasOne("PropertyService.Models.Room", "Room")
+                        .WithMany()
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Room");
                 });
 
             modelBuilder.Entity("PropertyService.Models.House", b =>

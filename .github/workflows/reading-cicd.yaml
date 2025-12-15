@@ -7,6 +7,10 @@ on:
     paths:
       - 'ReadingService/**'
       - '.github/workflows/reading-cicd.yaml'
+<<<<<<< HEAD
+=======
+  workflow_dispatch:
+>>>>>>> origin/main
 
 env:
   AWS_REGION: ap-southeast-1 # Change to your AWS region

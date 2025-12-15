@@ -55,7 +55,11 @@ namespace AA.Features.Users
                     };
                 }
 
+<<<<<<< HEAD
                 // Kiểm tra Owner có role Owner không
+=======
+                // Check if Owner has Owner role
+>>>>>>> origin/main
                 var ownerRoles = await _userManager.GetRolesAsync(owner);
                 if (!ownerRoles.Contains("Owner"))
                 {
@@ -66,7 +70,11 @@ namespace AA.Features.Users
                     };
                 }
 
+<<<<<<< HEAD
                 // Kiểm tra email đã tồn tại chưa
+=======
+                // Check if email already exists
+>>>>>>> origin/main
                 var existingUser = await _userManager.FindByEmailAsync(createUserDto.Email);
                 if (existingUser != null)
                 {
@@ -77,6 +85,7 @@ namespace AA.Features.Users
                     };
                 }
 
+<<<<<<< HEAD
                 // Role mặc định là Tenant
                 const string defaultRole = "Tenant";
 
@@ -84,12 +93,25 @@ namespace AA.Features.Users
                 var generatedPassword = GenerateRandomPassword();
 
                 // Tạo user mới
+=======
+                // Default role is Tenant
+                const string defaultRole = "Tenant";
+
+                // Generate random password
+                var generatedPassword = GenerateRandomPassword();
+
+                // Create new user
+>>>>>>> origin/main
                 var newUser = new ApplicationUser
                 {
                     UserName = createUserDto.Email,
                     Email = createUserDto.Email,
                     FullName = createUserDto.FullName,
+<<<<<<< HEAD
                     OwnerId = ownerId, // Gán OwnerId là userId của owner tạo
+=======
+                    OwnerId = ownerId, // Set OwnerId to the creating owner's userId
+>>>>>>> origin/main
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -104,7 +126,11 @@ namespace AA.Features.Users
                     };
                 }
 
+<<<<<<< HEAD
                 // Gán role mặc định Tenant cho user
+=======
+                // Assign default Tenant role to user
+>>>>>>> origin/main
                 await _userManager.AddToRoleAsync(newUser, defaultRole);
 
                 var roles = await _userManager.GetRolesAsync(newUser);
@@ -144,21 +170,35 @@ namespace AA.Features.Users
             const string allChars = lowercase + uppercase + digits + special;
 
             var random = new Random();
+<<<<<<< HEAD
             var password = new char[12]; // Password dài 12 ký tự
 
             // Đảm bảo có ít nhất 1 ký tự mỗi loại
+=======
+            var password = new char[12]; // Password length of 12 characters
+
+            // Ensure at least one character of each type
+>>>>>>> origin/main
             password[0] = lowercase[random.Next(lowercase.Length)];
             password[1] = uppercase[random.Next(uppercase.Length)];
             password[2] = digits[random.Next(digits.Length)];
             password[3] = special[random.Next(special.Length)];
 
+<<<<<<< HEAD
             // Fill các ký tự còn lại
+=======
+            // Fill remaining characters
+>>>>>>> origin/main
             for (int i = 4; i < password.Length; i++)
             {
                 password[i] = allChars[random.Next(allChars.Length)];
             }
 
+<<<<<<< HEAD
             // Shuffle password để random hơn
+=======
+            // Shuffle password for better randomness
+>>>>>>> origin/main
             for (int i = password.Length - 1; i > 0; i--)
             {
                 int j = random.Next(i + 1);

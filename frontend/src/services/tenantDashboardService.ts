@@ -1,4 +1,9 @@
 import { API_URLS, getAuthHeaders } from "@/utils/config";
+<<<<<<< HEAD
+=======
+import { InvoiceItem } from "@/types/invoice";
+import { getInvoiceDetail } from "@/services/invoiceService";
+>>>>>>> origin/main
 
 export interface ActiveContractData {
     houseName: string;
@@ -15,6 +20,10 @@ export interface UnpaidInvoiceItem {
     dueDate: string;
     isOverdue: boolean;
     status: number;
+<<<<<<< HEAD
+=======
+    items: InvoiceItem[]; // Thêm chi tiết các khoản
+>>>>>>> origin/main
 }
 
 export interface UnpaidInvoicesResponse {
@@ -45,6 +54,20 @@ export interface TenantDashboardData {
 export const formatVND = (amount: number) =>
     new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
 
+<<<<<<< HEAD
+=======
+// Lazy load invoice details khi user click vào invoice
+export const loadInvoiceDetails = async (invoiceId: number): Promise<InvoiceItem[]> => {
+    try {
+        const detail = await getInvoiceDetail(invoiceId);
+        return detail?.items || [];
+    } catch (error) {
+        console.warn(`Failed to fetch details for invoice ${invoiceId}:`, error);
+        return [];
+    }
+};
+
+>>>>>>> origin/main
 // --- API CALLS ---
 
 export const getTenantDashboardData = async (): Promise<TenantDashboardData> => {
@@ -73,12 +96,20 @@ export const getTenantDashboardData = async (): Promise<TenantDashboardData> => 
             console.warn("Contract API Error:", contractRes.status);
         }
 
+<<<<<<< HEAD
         // Xử lý Invoice Data
+=======
+        // Xử lý Invoice Data - KHÔNG load chi tiết items ngay để tăng tốc
+>>>>>>> origin/main
         let invoiceData: UnpaidInvoicesResponse = { totalUnpaidAmount: 0, unpaidInvoices: [] };
         if (invoiceRes.ok) {
             const json = await invoiceRes.json();
             if (json.success && json.data) {
                 invoiceData = json.data;
+<<<<<<< HEAD
+=======
+                // Không fetch chi tiết items ở đây nữa - sẽ lazy load khi cần
+>>>>>>> origin/main
             }
         } else {
             console.warn("Invoice API Error:", invoiceRes.status);

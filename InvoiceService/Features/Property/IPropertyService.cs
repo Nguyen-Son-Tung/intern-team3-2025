@@ -6,5 +6,9 @@ public interface IPropertyService
 {    
     Task<int?> GetActiveContractIdByUserIdAsync(string userId);
     Task<List<PropertyDetailsDto>> GetDetailsByContractIdsAsync(List<ContractIdsRequestDto> contractIds);
+<<<<<<< HEAD
 
+=======
+    Task<TenantContractDto?> GetTenantContractByIdAsync(int contractId);
+>>>>>>> origin/main
 }

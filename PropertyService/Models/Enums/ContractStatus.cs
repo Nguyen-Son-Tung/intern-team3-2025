@@ -1,4 +1,5 @@
 namespace PropertyService.Models.Enums;
+<<<<<<< HEAD
 
 public enum ContractStatus
 {
@@ -7,3 +8,10 @@ public enum ContractStatus
     Terminated,
     Expired
 }
+=======
+public enum ContractStatus
+{
+    Active, 
+    Ended, 
+}
+>>>>>>> origin/main

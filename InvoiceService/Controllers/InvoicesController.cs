@@ -1,9 +1,16 @@
 using System.Security.Claims;
+<<<<<<< HEAD
 using InvoiceService.Features.Invoice;
 using InvoiceService.Features.Invoice.DTOs;
 using InvoiceService.Models;
+=======
+using InvoiceService.Features.Invoice.DTOs;
+using InvoiceService.Models;
+using InvoiceService.Features.Invoice;
+>>>>>>> origin/main
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using InvoiceService.Features.Invoice.DTOs.Invoice;
 
 namespace InvoiceService.Controllers;
 
@@ -13,6 +20,8 @@ namespace InvoiceService.Controllers;
 public class InvoicesController : ControllerBase
 {
     private readonly IInvoiceService _invoiceService;
+    private readonly IInvoiceReminderService _reminderService;
+    
     private readonly ILogger<InvoicesController> _logger;
     private readonly Services.IUserServiceClient _userServiceClient;
     private readonly Services.PaymentWebSocketHandler _wsHandler;
@@ -23,20 +32,32 @@ public class InvoicesController : ControllerBase
         IInvoiceService invoiceService, 
         ILogger<InvoicesController> logger,
         Services.IUserServiceClient userServiceClient,
+<<<<<<< HEAD
         Services.PaymentWebSocketHandler wsHandler
         //IInvoiceRepository repository,
         //IRabbitMQPublisher publisher)
+=======
+        Services.PaymentWebSocketHandler wsHandler,
+        IInvoiceReminderService reminderService
+>>>>>>> origin/main
     )
     {
         _invoiceService = invoiceService;
         _logger = logger;
         _userServiceClient = userServiceClient;
         _wsHandler = wsHandler;
+<<<<<<< HEAD
         // _invoiceRepository = repository;
         // _publisher = publisher;
     }
 
 // ⭐ HÀM BỔ SUNG USER NAME (Giữ lại logic này trong Controller)
+=======
+        _reminderService = reminderService;
+    }
+
+//  HÀM BỔ SUNG USER NAME (Giữ lại logic này trong Controller)
+>>>>>>> origin/main
     private async Task<List<InvoiceResponse>> EnrichResponseWithUserNameAsync(IEnumerable<InvoiceResponse> invoices)
     {
         var response = invoices.ToList();
@@ -75,7 +96,16 @@ public class InvoicesController : ControllerBase
     // ==================== GET Endpoints ====================
 
     [HttpGet]
+<<<<<<< HEAD
     public async Task<ActionResult<IEnumerable<InvoiceResponse>>> GetAllInvoices()
+=======
+    public async Task<ActionResult<IEnumerable<InvoiceResponse>>> GetAllInvoices(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? status = null,
+        [FromQuery] int? year = null,
+        [FromQuery] int? month = null)
+>>>>>>> origin/main
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) 
                      ?? User.FindFirstValue("sub") 
@@ -96,6 +126,7 @@ public class InvoicesController : ControllerBase
             // User là Owner: Lấy hóa đơn của tất cả Tenant
             var tenantUserIds = await _userServiceClient.GetUserIdsByOwnerAsync(userId);
             
+<<<<<<< HEAD
             // ⭐ GỌI HÀM SERVICE MỚI (Trả về DTO đã làm giàu)
             invoices = await _invoiceService.GetAllInvoicesByOwnerAsync(userId, tenantUserIds);
         }
@@ -110,6 +141,19 @@ public class InvoicesController : ControllerBase
         // Chỉ cần bổ sung UserName (nếu Service không làm)
         var response = await EnrichResponseWithUserNameAsync(invoices); 
         
+=======
+            //  GỌI HÀM SERVICE MỚI với pagination
+            invoices = await _invoiceService.GetAllInvoicesByOwnerAsync(userId, tenantUserIds, page, pageSize, status, year, month);
+        }
+        else
+        {
+            // User là Tenant: Chỉ lấy hóa đơn của chính mình
+            //  GỌI HÀM SERVICE MỚI với pagination
+            invoices = await _invoiceService.GetInvoicesByTenantAsync(userId, page, pageSize, status, year, month);
+        }
+
+        var response = await EnrichResponseWithUserNameAsync(invoices);
+>>>>>>> origin/main
         return Ok(response);
     }
 
@@ -139,14 +183,35 @@ public class InvoicesController : ControllerBase
                 return Unauthorized(new { error = "Invalid or missing authentication" });
             }
             
+<<<<<<< HEAD
             // ⭐ GỌI HÀM SERVICE MỚI (Trả về DTO đã làm giàu)
+=======
+            //  GỌI HÀM SERVICE MỚI (Trả về DTO đã làm giàu)
+>>>>>>> origin/main
             invoiceResponse = await _invoiceService.GetInvoiceByIdAsync(id);
         }
         else
         {
+<<<<<<< HEAD
             // JWT auth
             // ⭐ GỌI HÀM SERVICE MỚI (Trả về DTO đã làm giàu)
             invoiceResponse = await _invoiceService.GetInvoiceByIdAsync(id, userId);
+=======
+            // JWT auth - check if user is owner or tenant
+            var userInfo = await _userServiceClient.GetUserInfoAsync(userId);
+            
+            if (userInfo?.OwnerId == null)
+            {
+                // User is an owner - get invoice and check if it belongs to one of their tenants
+                var tenantUserIds = await _userServiceClient.GetUserIdsByOwnerAsync(userId);
+                invoiceResponse = await _invoiceService.GetInvoiceByIdForOwnerAsync(id, userId, tenantUserIds);
+            }
+            else
+            {
+                // User is a tenant - only allow access to their own invoices
+                invoiceResponse = await _invoiceService.GetInvoiceByIdAsync(id, userId);
+            }
+>>>>>>> origin/main
         }
         
         if (invoiceResponse == null)
@@ -164,6 +229,7 @@ public class InvoicesController : ControllerBase
     /// Get invoices by status for the current user
     /// If user is an owner, returns invoices for all their tenants with the specified status
     /// If user is a regular tenant, returns only their own invoices with the specified status
+<<<<<<< HEAD
     /// </summary>
     [HttpGet("status/{status}")]
     public async Task<ActionResult<IEnumerable<InvoiceResponse>>> GetInvoicesByStatus(string status)
@@ -200,7 +266,46 @@ public class InvoicesController : ControllerBase
 
     /// <summary>
     /// Create a new invoice for the current user
+=======
+>>>>>>> origin/main
     /// </summary>
+    [HttpGet("status/{status}")]
+    public async Task<ActionResult<IEnumerable<InvoiceResponse>>> GetInvoicesByStatus(string status)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) 
+                     ?? User.FindFirstValue("sub") 
+                     ?? User.FindFirstValue("userId");
+        
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized(new { error = "UserId not found in access token" });
+        }
+
+        var userInfo = await _userServiceClient.GetUserInfoAsync(userId);
+        IEnumerable<InvoiceResponse> invoices;
+        
+        if (userInfo?.OwnerId == null)
+        {
+            var tenantUserIds = await _userServiceClient.GetUserIdsByOwnerAsync(userId);
+            //  GỌI HÀM SERVICE MỚI (Trả về DTO đã làm giàu)
+            invoices = await _invoiceService.GetInvoicesByStatusForOwnerAsync(userId, tenantUserIds, status);
+        }
+        else
+        {
+            //  GỌI HÀM SERVICE MỚI (Trả về DTO đã làm giàu)
+            invoices = await _invoiceService.GetInvoicesByStatusAsync(userId, status);
+        }
+
+        var response = await EnrichResponseWithUserNameAsync(invoices);
+        return Ok(response);
+    }
+
+    // ==================== POST Endpoints ====================
+
+    /// <summary>
+    /// Create a new invoice for the current user
+    /// </summary>
+    [AllowAnonymous]
     [HttpPost]
     public async Task<ActionResult<InvoiceResponse>> CreateInvoice([FromBody] CreateInvoiceRequest request)
     {
@@ -234,7 +339,11 @@ public class InvoicesController : ControllerBase
         }
 
         // ----------------------------------------------------------------------
+<<<<<<< HEAD
         // ⭐ BƯỚC QUAN TRỌNG: Truy vấn TenantContractId đang Active
+=======
+        //  BƯỚC QUAN TRỌNG: Truy vấn TenantContractId đang Active
+>>>>>>> origin/main
         // ----------------------------------------------------------------------
         var propertyService = HttpContext.RequestServices.GetRequiredService<Features.Property.IPropertyService>();
         int? tenantContractId = await propertyService.GetActiveContractIdByUserIdAsync(userId); 
@@ -243,6 +352,27 @@ public class InvoicesController : ControllerBase
         {
             return BadRequest(new { error = $"Không tìm thấy Hợp đồng đang Active cho người dùng {userId}. Không thể tạo hóa đơn." });
         }
+<<<<<<< HEAD
+=======
+
+        var tenantContract = await propertyService.GetTenantContractByIdAsync(tenantContractId.Value);
+        if (tenantContract == null)
+        {
+            return BadRequest(new { error = $"Không tìm thấy chi tiết hợp đồng {tenantContractId}." });
+        }
+
+        // Tạo description ưu tiên theo tháng/năm, sau đó dùng Contract ID
+        var descriptionSource = "";
+        if (request.CycleMonth.HasValue && request.CycleYear.HasValue)
+        {
+            descriptionSource = $"tháng {request.CycleMonth}/{request.CycleYear}";
+        }
+        else 
+        {
+            // Dùng TenantContractId (Đã được đảm bảo có)
+            descriptionSource = $"Hợp đồng {tenantContractId}"; 
+        }
+>>>>>>> origin/main
         // ----------------------------------------------------------------------
 
         var invoice = new Invoice
@@ -250,7 +380,11 @@ public class InvoicesController : ControllerBase
             UserId = userId,
             InvoiceDate = request.InvoiceDate,
             DueDate = request.DueDate,
+<<<<<<< HEAD
             // ⭐ GÁN CONTRACT ID ACTIVE VÀO INVOICE MODEL (Liên kết vĩnh viễn)
+=======
+            //  GÁN CONTRACT ID ACTIVE VÀO INVOICE MODEL (Liên kết vĩnh viễn)
+>>>>>>> origin/main
             TenantContractId = tenantContractId, 
         };
 
@@ -267,6 +401,7 @@ public class InvoicesController : ControllerBase
 
             var items = new List<InvoiceItem>();
 
+<<<<<<< HEAD
             // Tạo description ưu tiên theo tháng/năm, sau đó dùng Contract ID
             var descriptionSource = "";
             if (request.CycleMonth.HasValue && request.CycleYear.HasValue)
@@ -279,6 +414,8 @@ public class InvoicesController : ControllerBase
                 descriptionSource = $"Hợp đồng {tenantContractId}"; 
             }
             
+=======
+>>>>>>> origin/main
             // Tiền điện
             if (request.ElectricUsage.HasValue && request.ElectricUsage.Value > 0)
             {
@@ -308,14 +445,23 @@ public class InvoicesController : ControllerBase
             }
 
             // Thêm tiền phòng
+<<<<<<< HEAD
             if (activePricing.RoomPrice > 0)
+=======
+            if (tenantContract.Price > 0)
+>>>>>>> origin/main
             {
                 items.Add(new InvoiceItem
                 {
                     Description = $"Tiền phòng {descriptionSource}",
                     Quantity = 1,
+<<<<<<< HEAD
                     UnitPrice = activePricing.RoomPrice,
                     Amount = activePricing.RoomPrice,
+=======
+                    UnitPrice = tenantContract.Price,
+                    Amount = tenantContract.Price,
+>>>>>>> origin/main
                     ProductCode = "ROOM"
                 });
             }
@@ -343,6 +489,19 @@ public class InvoicesController : ControllerBase
                 Amount = item.Amount,
                 ProductCode = item.ProductCode
             }).ToList();
+        }
+
+        // Luôn thêm tiền phòng từ hợp đồng nếu chưa có
+        if (tenantContract.Price > 0 && !invoice.Items.Any(i => i.ProductCode == "ROOM"))
+        {
+            invoice.Items.Add(new InvoiceItem
+            {
+                Description = $"Tiền phòng {descriptionSource}",
+                Quantity = 1,
+                UnitPrice = tenantContract.Price,
+                Amount = tenantContract.Price,
+                ProductCode = "ROOM"
+            });
         }
 
         var createdInvoice = await _invoiceService.CreateInvoiceAsync(invoice);
@@ -507,7 +666,7 @@ public class InvoicesController : ControllerBase
             PaidDate = invoice.PaidDate,
             CreatedAt = invoice.CreatedAt,
             UpdatedAt = invoice.UpdatedAt,
-            Items = invoice.Items.Select(item => new InvoiceItemResponse
+            Items = invoice.Items.Select(item => new InvoiceService.Features.Invoice.DTOs.InvoiceItemResponse
             {
                 Id = item.Id,
                 Description = item.Description,
@@ -521,6 +680,7 @@ public class InvoicesController : ControllerBase
         };
     }
 
+<<<<<<< HEAD
     // private async Task<List<InvoiceResponse>> MapToResponseWithUserNameAsync(IEnumerable<Invoice> invoices)
     // {
     //     var response = new List<InvoiceResponse>();
@@ -571,4 +731,83 @@ public class InvoicesController : ControllerBase
 
     //     return Ok(new { Message = $"Nhắc thanh toán cho hóa đơn {invoiceId} đã được gửi." });
     // }
+=======
+    [HttpGet("pending-this-month")]
+    [Authorize(Roles = "Owner")]
+    [ProducesResponseType(typeof(IEnumerable<InvoiceService.Features.Invoice.DTOs.PendingInvoiceDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPendingInvoicesThisMonth()
+    {
+        try
+        {
+            var ownerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(ownerId))
+            {
+                return Unauthorized("Owner ID not found in token");
+            }
+
+            var pendingInvoices = await _invoiceService.GetPendingInvoicesThisMonthAsync(ownerId);
+            return Ok(pendingInvoices);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting pending invoices for current month");
+            return StatusCode(500, "Internal server error");
+        }
+    }
+    
+    /// <summary>
+    /// Kích hoạt quá trình nhắc nhở thanh toán cho tất cả khách thuê thuộc Owner hiện tại.
+    /// </summary>
+    [HttpPost("remind-unpaid")]
+    [Authorize(Roles = "Owner")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> RemindUnpaidInvoices()
+    {
+        // Lấy OwnerId từ Token (ClaimTypes.NameIdentifier)
+        var ownerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(ownerId))
+        {
+            _logger.LogWarning("RemindUnpaidInvoices attempted without a valid Owner ID.");
+            return Unauthorized("Owner ID not found in token.");
+        }
+        
+        try
+        {
+            // ⭐️ Gọi Service logic đã viết, truyền OwnerId vào để xử lý đúng phạm vi
+            await _reminderService.SendPaymentRemindersAsync(ownerId);
+            
+            _logger.LogInformation("Owner {OwnerId} successfully triggered payment reminders.", ownerId);
+            
+            return Ok(new { Message = "Yêu cầu nhắc nhở thanh toán đã được gửi đi. Hệ thống đang xử lý." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing manual payment reminder for Owner {OwnerId}", ownerId);
+            return StatusCode(StatusCodes.Status500InternalServerError, "Lỗi hệ thống khi gửi nhắc nhở.");
+        }
+    }
+
+    [HttpGet("monthly-revenue")]
+    [Authorize(Roles = "Owner")]
+    [ProducesResponseType(typeof(List<MonthlyRevenueDataPoint>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMonthlyRevenue()
+    {
+        var ownerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(ownerId)) return Unauthorized();
+
+        try
+        {
+            var report = await _invoiceService.GetMonthlyRevenueReportAsync(ownerId);
+            return Ok(report);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting monthly revenue report for owner {OwnerId}", ownerId);
+            return StatusCode(500, "Internal server error: Could not generate revenue report.");
+        }
+    }
+>>>>>>> origin/main
 }

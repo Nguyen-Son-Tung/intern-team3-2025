@@ -18,6 +18,11 @@ public interface IMonthlyReadingService
     // Task<IEnumerable<MonthlyReadingResponseDto>> GetAllReadingsByUserIdAsync(string userId);
     Task<List<MonthlyReadingResponseDto>> GetAllAsync();
     
+<<<<<<< HEAD
     
+=======
+    Task<MonthlyReadingDto> CreateEmptyAsync(int cycleId, int tenantContractId);
+    Task TriggerAutoInvoicesAsync(string ownerId);
+>>>>>>> origin/main
 }
 

@@ -79,4 +79,80 @@ public class UserServiceClient : IUserServiceClient
             return new List<string>();
         }
     }
+<<<<<<< HEAD
+=======
+
+    public async Task<List<UserInfo>> GetTenantsByOwnerIdAsync(string ownerId)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"/api/users/owner/{ownerId}/tenants");
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Failed to get tenants by owner {OwnerId}. Status: {StatusCode}", 
+                    ownerId, response.StatusCode);
+                return new List<UserInfo>();
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            var users = JsonSerializer.Deserialize<List<UserInfo>>(content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            // ⭐️ Trả về List<UserInfo> đầy đủ
+            return users ?? new List<UserInfo>(); 
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error calling AuthService to get tenants by owner {OwnerId}", ownerId);
+            return new List<UserInfo>();
+        }
+    }
+
+    public async Task<List<string>> GetAllOwnerIdsAsync()
+    {
+        try
+        {
+            _logger.LogInformation("Calling AAService to retrieve all active Owner IDs.");
+
+            // Endpoint này giả định được thiết kế để chỉ trả về danh sách Owner có Tenants đang Active
+            var response = await _httpClient.GetAsync("api/users/owners");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                
+                // Giả định API trả về List<string>
+                var ownerIds = JsonSerializer.Deserialize<List<string>>(
+                    content, 
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                );
+
+                if (ownerIds == null || ownerIds.Count == 0)
+                {
+                    _logger.LogWarning("AAService returned 0 active Owner IDs.");
+                }
+
+                return ownerIds ?? new List<string>();
+            }
+            else
+            {
+                _logger.LogError("Failed to retrieve Owner IDs from AAService. Status Code: {StatusCode}", response.StatusCode);
+                return new List<string>();
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "HTTP request failed while retrieving Owner IDs from AAService.");
+            return new List<string>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unexpected error occurred while processing GetAllOwnerIdsAsync.");
+            return new List<string>();
+        }
+    }
+>>>>>>> origin/main
 }

@@ -33,6 +33,13 @@ namespace InvoiceService.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
+<<<<<<< HEAD
+=======
+                    b.Property<string>("DisplayStatus")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+>>>>>>> origin/main
                     b.Property<DateTime>("DueDate")
                         .HasColumnType("datetime(6)");
 
@@ -47,8 +54,13 @@ namespace InvoiceService.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
 
+<<<<<<< HEAD
                     b.Property<string>("TenantContractId")
                         .HasColumnType("longtext");
+=======
+                    b.Property<int?>("TenantContractId")
+                        .HasColumnType("int");
+>>>>>>> origin/main
 
                     b.Property<decimal>("TotalAmount")
                         .HasPrecision(18, 2)
