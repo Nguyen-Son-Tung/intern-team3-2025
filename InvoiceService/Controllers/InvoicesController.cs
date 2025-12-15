@@ -278,11 +278,16 @@ public class InvoicesController : ControllerBase
         }
         // ----------------------------------------------------------------------
 
+        // Nếu không truyền InvoiceDate và DueDate, tự động set theo tháng hiện tại
+        var now = DateTime.UtcNow;
+        var invoiceDate = request.InvoiceDate ?? new DateTime(now.Year, now.Month, 1);
+        var dueDate = request.DueDate ?? new DateTime(now.Year, now.Month, DateTime.DaysInMonth(now.Year, now.Month));
+
         var invoice = new Invoice
         {
             UserId = userId,
-            InvoiceDate = request.InvoiceDate,
-            DueDate = request.DueDate,
+            InvoiceDate = invoiceDate,
+            DueDate = dueDate,
             //  GÁN CONTRACT ID ACTIVE VÀO INVOICE MODEL (Liên kết vĩnh viễn)
             TenantContractId = tenantContractId, 
         };

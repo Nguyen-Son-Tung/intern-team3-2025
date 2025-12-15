@@ -24,6 +24,15 @@ export default function InvoiceTable({ invoices, loading, onSelectInvoice }: Inv
         }
     };
 
+    // Helper render badge display status
+    const getDisplayStatusBadge = (displayStatus: string) => {
+        switch (displayStatus) {
+            case "Visible": return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Hiển thị</span>;
+            case "Invisible": return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Ẩn</span>;
+            default: return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{displayStatus}</span>;
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center py-20">
@@ -43,6 +52,7 @@ export default function InvoiceTable({ invoices, loading, onSelectInvoice }: Inv
                             <th className="p-4 border-b">Hạn đóng</th>
                             <th className="p-4 border-b text-right">Tổng tiền</th>
                             <th className="p-4 border-b text-center">Trạng thái</th>
+                            <th className="p-4 border-b text-center">Hiển thị</th>
                             <th className="p-4 border-b text-center">Hành động</th>
                         </tr>
                     </thead>
@@ -59,6 +69,7 @@ export default function InvoiceTable({ invoices, loading, onSelectInvoice }: Inv
                                 <td className="p-4 text-gray-600">{formatDate(inv.dueDate)}</td>
                                 <td className="p-4 text-right font-bold text-gray-800">{formatCurrency(inv.totalAmount)}</td>
                                 <td className="p-4 text-center">{getStatusBadge(inv.status)}</td>
+                                <td className="p-4 text-center">{getDisplayStatusBadge(inv.displayStatus)}</td>
                                 <td className="p-4 text-center">
                                     {inv.status !== "Paid" ? (
                                         <span className="text-xs text-gray-400 italic">-</span>
@@ -69,7 +80,7 @@ export default function InvoiceTable({ invoices, loading, onSelectInvoice }: Inv
                             </tr>
                         )) : (
                             <tr>
-                                <td colSpan={6} className="p-10 text-center text-gray-400">
+                                <td colSpan={7} className="p-10 text-center text-gray-400">
                                     <p>Không tìm thấy hóa đơn nào.</p>
                                 </td>
                             </tr>

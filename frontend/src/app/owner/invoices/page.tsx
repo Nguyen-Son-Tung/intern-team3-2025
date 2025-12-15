@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { getMyInvoices, remindAllUnpaid } from "@/services/invoiceService";
+import { getMyInvoices, remindAllUnpaid, triggerInvoiceVisibility } from "@/services/invoiceService";
 import { Invoice, InvoiceApiParams } from "@/types/invoice";
 import InvoiceDetailModal from "@/components/invoice/InvoiceDetailModal";
 import InvoiceStats from "@/components/invoice/InvoiceStats";
@@ -28,6 +28,7 @@ export default function OwnerInvoicesPage() {
     // --- STATE UI KHÁC ---
     const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
     const [isRemindingAll, setIsRemindingAll] = useState(false);
+    const [isTriggeringVisibility, setIsTriggeringVisibility] = useState(false);
     
     // Thêm state bật tắt Modal
     const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -118,7 +119,32 @@ export default function OwnerInvoicesPage() {
             setIsRemindingAll(false);
         }
     }
+    const handleTriggerVisibility = async () => {
+        try {
+            setIsTriggeringVisibility(true);
+            const result = await triggerInvoiceVisibility();
+            if (result.success) {
+                alert(`✅ ${result.message}`);
+                // Refresh data by re-fetching
+                const params: InvoiceApiParams = { page: currentPage, pageSize };
+                if (statusFilter !== "ALL") params.status = statusFilter;
+                if (selectedYear) params.year = selectedYear;
+                if (selectedMonth !== "ALL") params.month = selectedMonth;
 
+                const data = await getMyInvoices(params);
+                setInvoices(data);
+                setTotalPages(Math.ceil(data.length / pageSize) || 1);
+                setTotalInvoices(data.length);
+            } else {
+                alert(`❌ Lỗi: ${result.message}`);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Lỗi kết nối.");
+        } finally {
+            setIsTriggeringVisibility(false);
+        }
+    };
 
     return (
         <div className="space-y-6 p-6 bg-gray-50 min-h-screen text-gray-800">
@@ -128,12 +154,31 @@ export default function OwnerInvoicesPage() {
                     <p className="text-gray-500 text-sm">Hóa đơn tháng {selectedMonth === "ALL" ? "Tất cả" : selectedMonth}/{selectedYear}</p>
                 </div>
 
+                {/* Section Trigger Buttons */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Công cụ quản lý</h3>
+                    <div className="flex flex-wrap gap-4">
+                        <button
+                            onClick={handleTriggerVisibility}
+                            disabled={isTriggeringVisibility}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                            {isTriggeringVisibility ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            ) : (
+                                ""
+                            )}
+                            {isTriggeringVisibility ? "Đang cập nhật..." : "Hiển thị hóa đơn"}
+                        </button>
+                    </div>
+                </div>
                 <InvoiceStats 
                     stats={stats} 
                     countRemindable={countRemindable} 
                     isRemindingAll={isRemindingAll} 
                     onRemindAll={openRemindModal} // Gọi hàm mở Modal
                 />
+                
             </div>
 
             <InvoiceFilters

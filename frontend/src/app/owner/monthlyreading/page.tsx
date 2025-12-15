@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { MonthlyReading, ReadingStatus } from "@/types/monthlyReading";
 import { getAllMonthlyReadings, sendRemindSubmission, triggerNewCycleNotification } from "@/services/monthlyReadingService";
+import { triggerAutoInvoice } from "@/services/invoiceService";
 import UtilityReadingDetailModal from "@/components/monthlyReading/UtilityReadingDetailModal";
 import ReadingStats from "@/components/monthlyReading/ReadingStats";
 import ReadingFilterBar from "@/components/monthlyReading/ReadingFilterBar";
@@ -25,6 +26,7 @@ export default function OwnerUtilitiesPage() {
   // State xử lý hành động (Nhắc nộp hoặc Tạo kỳ mới)
   const [actionType, setActionType] = useState<"REMIND_SUBMISSION" | "NEW_CYCLE" | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isTriggeringAutoInvoice, setIsTriggeringAutoInvoice] = useState(false);
 
   // --- LOGIC: TẠO DANH SÁCH NĂM ĐỘNG ---
   const years = useMemo(() => {
@@ -187,6 +189,26 @@ export default function OwnerUtilitiesPage() {
     }
   };
 
+  // Handler cho trigger auto invoice
+  const handleTriggerAutoInvoice = async () => {
+    try {
+      setIsTriggeringAutoInvoice(true);
+      const result = await triggerAutoInvoice();
+      if (result.success) {
+        alert(`✅ ${result.message}`);
+        // Refresh data
+        window.location.reload();
+      } else {
+        alert(`❌ Lỗi: ${result.message}`);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Lỗi kết nối.");
+    } finally {
+      setIsTriggeringAutoInvoice(false);
+    }
+  };
+
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen text-gray-800">
       <div className="flex flex-col gap-6">
@@ -203,12 +225,23 @@ export default function OwnerUtilitiesPage() {
             <div className="relative group flex items-center h-full">
               <Info className="w-5 h-6 text-gray-500 cursor-pointer hover:text-gray-700 transition" />
 
-              <div className="absolute left-1/2 bottom-full transform -translate-x-1/2 mb-2 w-64 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-60"> {/* Tăng z-index lên 60 */}
-                <p className="font-semibold text-yellow-300 mb-1">Lưu ý khi tạo chu kỳ mới (*)</p>
+              <div className="absolute left-1/2 bottom-full transform -translate-x-1/2 mb-2 w-64 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-60">
                 <p>Nếu như tháng này các khách đã được tạo bản nộp chỉ số thì sẽ được bỏ qua.</p>
                 <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-gray-800"></div>
               </div>
             </div>
+            <button
+              onClick={handleTriggerAutoInvoice}
+              disabled={isTriggeringAutoInvoice}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed transition shadow flex items-center gap-2"
+            >
+              {isTriggeringAutoInvoice ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              ) : (
+                ""
+              )}
+              {isTriggeringAutoInvoice ? "Đang tạo hóa đơn..." : "Tạo hóa đơn tự động"}
+            </button>
             <button
               onClick={openNewCycleModal}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition shadow flex items-center gap-2"

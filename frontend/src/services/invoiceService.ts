@@ -95,3 +95,67 @@ export const remindAllUnpaid = async (): Promise<boolean> => {
         return false;
     }
 };
+
+export const triggerInvoiceVisibility = async (): Promise<{ success: boolean; message: string }> => {
+    try {
+        const url = `${API_URLS.INVOICE}/InvoiceJob/trigger-visibility`;
+        console.log('Calling API:', url);
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+        });
+
+        console.log('Response status:', res.status);
+        console.log('Response ok:', res.ok);
+
+        if (!res.ok) {
+            let errorMessage = `Error ${res.status}`;
+            try {
+                const errorData = await res.json();
+                console.log('Error data:', errorData);
+                errorMessage = errorData.message || errorMessage;
+            } catch (jsonError) {
+                console.log('Failed to parse error response as JSON:', jsonError);
+                // Try to get text response
+                try {
+                    const textResponse = await res.text();
+                    console.log('Text response:', textResponse);
+                    if (textResponse) {
+                        errorMessage = textResponse;
+                    }
+                } catch (textError) {
+                    console.log('Failed to get text response:', textError);
+                }
+            }
+            return { success: false, message: errorMessage };
+        }
+
+        const data = await res.json();
+        console.log('Success data:', data);
+        return { success: true, message: data.message };
+    } catch (error) {
+        console.error("Error triggering invoice visibility:", error);
+        return { success: false, message: "Network error" };
+    }
+};
+
+export const triggerAutoInvoice = async (): Promise<{ success: boolean; message: string }> => {
+    try {
+        const res = await fetch(`${API_URLS.READING}/monthlyreading/trigger-auto-invoice`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({ message: 'Unknown error' }));
+            return { success: false, message: errorData.message || `Error ${res.status}` };
+        }
+
+        const data = await res.json();
+        return { success: true, message: data.message };
+    } catch (error) {
+        console.error("Error triggering auto invoice:", error);
+        return { success: false, message: "Network error" };
+    }
+};
