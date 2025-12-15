@@ -51,9 +51,9 @@ export default function ReadingCard({ title, icon, oldValue, newValue, usedValue
             </label>
 
             <div className="mt-4 space-y-2 text-sm">
-                <p>Chỉ số tháng trước: <span className="font-medium">{oldValue}</span></p>
+                <h4>Chỉ số tháng trước: <span className="font-medium">{oldValue}</span></h4>
 
-                <p>Chỉ số tháng này:
+                <h4>Chỉ số tháng này:
                     {isNaNValue ? (
                         <span className="ml-1 text-red-500 font-medium">
                             Ảnh mờ hoặc không phải ảnh đồng hồ. Vui lòng upload lại!
@@ -63,10 +63,10 @@ export default function ReadingCard({ title, icon, oldValue, newValue, usedValue
                             {newValue}
                         </span>
                     )}
-                </p>
+                </h4>
 
                 {isValidUsedValue && (
-                    <p>Chỉ số tiêu thụ:
+                    <h4>Chỉ số tiêu thụ:
                         <span className={usedValueClass}>
                             {currentUsedValue}
                         </span>
@@ -76,25 +76,25 @@ export default function ReadingCard({ title, icon, oldValue, newValue, usedValue
 
                                 <Info className="w-4 h-4 text-yellow-600 ml-1 cursor-pointer hover:text-yellow-700 transition" />
                                 <div className="absolute left-1/2 bottom-full transform -translate-x-1/2 mb-2 w-64 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50">
-                                    <p className="font-semibold text-red-400 mb-1">Cảnh báo Bất thường!</p>
-                                    <p>Chỉ số tiêu thụ tháng này vượt quá ngưỡng quy định ({isElectric ? '> 500' : '> 30'}). Vui lòng kiểm tra lại ảnh đã nộp.</p>
+                                    <h4 className="font-semibold text-red-400 mb-1">Cảnh báo Bất thường!</h4>
+                                    <h4>Chỉ số tiêu thụ tháng này vượt quá ngưỡng quy định ({isElectric ? '> 500' : '> 30'}). Vui lòng kiểm tra lại ảnh đã nộp.</h4>
                                     <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-gray-800"></div>
                                 </div>
                             </div>
                         )}
-                    </p>
+                    </h4>
                 )}
 
                 {isNaNValue && (
-                    <p className="text-gray-400">Chỉ số tiêu thụ tháng này: <span className="ml-1">0</span></p>
+                    <h4 className="text-gray-400">Chỉ số tiêu thụ tháng này: <span className="ml-1">0</span></h4>
                 )}
 
-                <p>Trạng thái:
+                <h4>Trạng thái:
                     <span> </span>
                     <span className={statusVietnamese === "Đã xác nhận" ? "font-medium text-green-600" : ""}>
                         {statusVietnamese}
                     </span>
-                </p>
+                </h4>
             </div>
         </div>
     );

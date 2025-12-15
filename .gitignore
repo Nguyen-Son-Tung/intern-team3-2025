@@ -25,6 +25,9 @@ Desktop.ini
 .env
 .env.local
 .env.*.local
+node_modules
+package.json
+package-lock.json
 
 appsettings.Development.json
 appsettings.*.json
