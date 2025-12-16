@@ -55,4 +55,5 @@ export interface TenantUser {
   fullName: string;
   email: string;
   phoneNumber: string;
+  ownerId: string;
 }

@@ -85,7 +85,8 @@ export const getTenants = async (): Promise<TenantUser[]> => {
             id: u.id,
             fullName: u.fullName,
             email: u.email,
-            phoneNumber: u.phoneNumber || "N/A"
+            phoneNumber: u.phoneNumber || "N/A",
+            ownerId: u.ownerId
         }));
     }
     
@@ -94,4 +95,51 @@ export const getTenants = async (): Promise<TenantUser[]> => {
     console.error("Lỗi kết nối AA Service:", error);
     return [];
   }
+};
+
+export const deleteTenantAPI = async (userId: string) => {
+    try {
+        const res = await fetch(`${API_URLS.AA}/Users/${userId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders(), 
+        });
+
+        const data = await res.json();
+        
+        if (!res.ok) {
+            return { success: false, message: data.message || "Lỗi khi xóa người dùng" };
+        }
+
+        return { success: true, message: "Xóa thành công" };
+    } catch (error) {
+        console.error("Lỗi xóa tenant:", error);
+        return { success: false, message: "Lỗi kết nối server" };
+    }
+};
+
+export interface UpdateTenantDto {
+    fullName?: string;
+    email?: string;
+    phoneNumber?: string;
+}
+
+export const updateTenantAPI = async (userId: string, data: UpdateTenantDto) => {
+    try {
+        const res = await fetch(`${API_URLS.AA}/Users/${userId}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        
+        if (!res.ok) {
+            return { success: false, message: result.message || "Lỗi cập nhật" };
+        }
+
+        return { success: true, message: "Cập nhật thành công" };
+    } catch (error) {
+        console.error("Lỗi update tenant:", error);
+        return { success: false, message: "Lỗi kết nối server" };
+    }
 };
