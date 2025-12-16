@@ -83,12 +83,6 @@ export default function TenantBillsPage() {
                         Chưa thanh toán
                     </button>
                     <button 
-                        onClick={() => handleFilterChange("OVERDUE")} 
-                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${filter === "OVERDUE" ? "bg-red-100 text-red-700" : "text-gray-600 hover:bg-gray-50"}`}
-                    >
-                        Quá hạn
-                    </button>
-                    <button 
                         onClick={() => handleFilterChange("PAID")} 
                         className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${filter === "PAID" ? "bg-green-100 text-green-700" : "text-gray-600 hover:bg-gray-50"}`}
                     >
@@ -163,11 +157,6 @@ export default function TenantBillsPage() {
                                             {inv.status === "Unpaid" && (
                                                 <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
                                                     Chưa thanh toán
-                                                </span>
-                                            )}
-                                            {inv.status === "Overdue" && (
-                                                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
-                                                    Quá hạn
                                                 </span>
                                             )}
                                         </td>
