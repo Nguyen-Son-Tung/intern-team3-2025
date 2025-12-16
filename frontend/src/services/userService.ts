@@ -1,3 +1,6 @@
+import { API_URLS } from "@/utils/config";
+import { TenantUser } from "@/types/contract";
+
 const AA_API_URL = process.env.NEXT_PUBLIC_AA_API_URL;
 
 const getAuthHeaders = () => {
@@ -49,4 +52,46 @@ export const getCurrentUser = async (): Promise<UserInfo | null> => {
         console.error("Lỗi fetch user info:", error);
         return null;
     }
+};
+
+export const getTenants = async (): Promise<TenantUser[]> => {
+  try {
+    const ownerId = localStorage.getItem("userId");
+
+    if (!ownerId) {
+      console.warn("Không tìm thấy Owner ID trong localStorage");
+      return [];
+    }
+
+    const res = await fetch(`${API_URLS.AA}/Users/owner/${ownerId}/tenants`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Service-Api-Key": "InternalService_SecretKey_2024_ChangeMeInProduction", 
+      },
+    });
+
+    if (!res.ok) {
+      console.warn(`Lỗi tải danh sách khách thuê: ${res.status}`);
+      return [];
+    }
+
+    const data = await res.json();
+
+    // 3. Map dữ liệu trả về
+    if (Array.isArray(data)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return data.map((u: any) => ({
+            id: u.id,
+            fullName: u.fullName,
+            email: u.email,
+            phoneNumber: u.phoneNumber || "N/A"
+        }));
+    }
+    
+    return [];
+  } catch (error) {
+    console.error("Lỗi kết nối AA Service:", error);
+    return [];
+  }
 };

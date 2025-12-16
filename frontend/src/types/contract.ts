@@ -1,19 +1,6 @@
-// Map theo Enum của Backend
 export enum ContractStatus {
   Active = 0,
   Ended = 1,
-}
-
-export interface Contract {
-  id: number;
-  roomId: number;
-  tenantId: string;
-  startDate: string;
-  endDate?: string;
-  price: number;
-  status: ContractStatus | number;
-  fileUrl?: string;
-  createdAt: string;
 }
 
 // Helper để lấy text hiển thị & màu sắc từ Status code
@@ -27,3 +14,45 @@ export const getStatusInfo = (status: number) => {
             return { label: "Không xác định", color: "bg-gray-100 text-gray-500" };
     }
 };
+
+
+export interface Contract {
+  id: number;
+  roomId: number;
+  tenantId: string;
+  startDate: string; 
+  endDate: string;  
+  price: number;
+  status: ContractStatus | number;
+  fileUrl?: string;
+  createdAt: string;
+  houseName?: string;
+  roomName?: string;
+  tenantName?: string;
+}
+
+export interface CreateContractDto {
+  roomId: number;
+  tenantId: string;
+  startDate: string;
+  endDate: string;
+  price: number;
+  fileUrl?: string;
+}
+
+export interface UpdateContractDto {
+  status?: ContractStatus;
+  startDate?: string;
+  endDate?: string;
+  price?: number;
+  roomId?: number;
+  tenantId?: string;
+  fileUrl?: string;
+}
+
+export interface TenantUser {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+}

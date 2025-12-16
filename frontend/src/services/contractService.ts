@@ -1,24 +1,9 @@
-import { Contract } from "@/types/contract";
+
+
+import { API_URLS, getAuthHeaders } from "@/utils/config";
+import { Contract, CreateContractDto, UpdateContractDto } from "@/types/contract";
 
 const PROP_API_URL = process.env.NEXT_PUBLIC_PROPERTY_API_URL;
-
-const getAuthHeaders = (): Record<string, string> => {
-    // Giá trị mặc định luôn có Content-Type
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-    };
-
-    // Kiểm tra môi trường browser
-    if (typeof window !== "undefined") {
-        const token = localStorage.getItem("accessToken");
-        // Chỉ thêm Authorization nếu token tồn tại và không rỗng
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-    }
-
-    return headers;
-};
 
 export const getMyContracts = async (): Promise<Contract[]> => {
     try {
@@ -59,4 +44,49 @@ export const getContractDetail = async (id: number): Promise<Contract | null> =>
         console.error("Lỗi fetch contract detail:", error);
         return null;
     }
+};
+
+
+const BASE_URL = `${API_URLS.PROPERTY}/contracts`;
+
+export const getOwnerContracts = async (): Promise<Contract[]> => {
+  const res = await fetch(`${BASE_URL}/list-contracts`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error("Không thể tải danh sách hợp đồng");
+  const json = await res.json();
+  return json.data || [];
+};
+
+export const createContract = async (data: CreateContractDto): Promise<Contract> => {
+  const res = await fetch(`${BASE_URL}`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+  
+  const json = await res.json();
+  if (!res.ok) {
+    throw new Error(json.message || "Lỗi tạo hợp đồng");
+  }
+  return json.data;
+};
+
+export const updateContract = async (id: number, data: UpdateContractDto): Promise<Contract> => {
+  const res = await fetch(`${BASE_URL}/${id}`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Lỗi cập nhật hợp đồng");
+  const json = await res.json();
+  return json.data;
+};
+
+export const deleteContract = async (id: number): Promise<void> => {
+  const res = await fetch(`${BASE_URL}/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error("Lỗi xóa hợp đồng");
 };

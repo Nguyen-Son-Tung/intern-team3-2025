@@ -6,9 +6,10 @@ interface ConfirmModalProps {
     onConfirm: () => void;
     title: string;
     message: string;
-    isLoading?: boolean; // Để hiện loading ngay trên nút xác nhận
+    isLoading?: boolean;
     confirmText?: string;
     cancelText?: string;
+    hideCancel?: boolean;
 }
 
 export default function ConfirmModal({ 
@@ -19,14 +20,14 @@ export default function ConfirmModal({
     message, 
     isLoading = false,
     confirmText = "Xác nhận",
-    cancelText = "Hủy bỏ"
+    cancelText = "Hủy bỏ",
+    hideCancel = false
 }: ConfirmModalProps) {
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden transform transition-all scale-100">
-                
                 {/* Header */}
                 <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
                     <h3 className="text-lg font-bold text-gray-800">{title}</h3>
@@ -37,20 +38,23 @@ export default function ConfirmModal({
 
                 {/* Body */}
                 <div className="p-6">
-                    <p className="text-gray-600 text-sm leading-relaxed">
+                    <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
                         {message}
                     </p>
                 </div>
 
                 {/* Footer */}
                 <div className="p-4 border-t bg-gray-50 flex justify-end gap-3">
-                    <button 
-                        onClick={onClose}
-                        disabled={isLoading}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none disabled:opacity-50"
-                    >
-                        {cancelText}
-                    </button>
+                    {/* Chỉ hiện nút Hủy nếu hideCancel = false */}
+                    {!hideCancel && (
+                        <button 
+                            onClick={onClose}
+                            disabled={isLoading}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none disabled:opacity-50"
+                        >
+                            {cancelText}
+                        </button>
+                    )}
                     
                     <button 
                         onClick={onConfirm}

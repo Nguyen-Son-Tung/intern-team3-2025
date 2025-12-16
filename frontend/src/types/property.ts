@@ -27,6 +27,7 @@ export interface Room {
   name: string;
   floor: number;
   status: RoomStatus;
+  houseName?: string;
   createdAt: string;
 }
 
