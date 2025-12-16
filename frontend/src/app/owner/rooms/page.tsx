@@ -335,9 +335,19 @@ function RoomManager() {
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tầng <span className="text-red-500">*</span></label>
                     <input 
                         type="number"
+                        min="1"
                         className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" 
                         value={formData.floor} 
-                        onChange={e => setFormData({...formData, floor: parseInt(e.target.value)})} 
+                        onChange={e => {
+                            const val = parseInt(e.target.value);
+                            if (!isNaN(val) && val < 1) return;
+                            setFormData({...formData, floor: isNaN(val) ? 0 : val});
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === "-" || e.key === "e") {
+                                e.preventDefault();
+                            }
+                        }}
                         required 
                     />
                 </div>
