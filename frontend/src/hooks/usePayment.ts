@@ -78,52 +78,53 @@ export const usePayment = (invoiceId: string) => {
 
     const startPaymentStatusPolling = useCallback(() => {
         try {
-            const wsUrl = getWebSocketUrl(invoiceId);
-            console.log('WebSocket URL:', wsUrl);
-
-            const ws = new WebSocket(wsUrl);
-
-            ws.onopen = () => {
-                console.log('WebSocket connected for invoice:', invoiceId);
+            const wsUrl = `/payment-api/ws/payment-status/${e}`;
+            console.log("WebSocket URL:", wsUrl);
+    
+            const s = new WebSocket(wsUrl);
+    
+            s.onopen = () => {
+                console.log('WebSocket connected for payment status monitoring');
             };
-
-            ws.onmessage = (event) => {
+    
+            s.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
-                    console.log('WebSocket message received:', data);
-
+                    console.log('Payment status update:', data);
+    
                     if (data.status === 'Paid' || data.invoiceStatus === 'Paid') {
+                        // Handle successful payment
                         setState(prev => ({ ...prev, paymentSuccess: true }));
-                        ws.close();
-
-                        // Redirect after 3 seconds
+                        s.close();
+                        
+                        // Redirect or update UI
                         setTimeout(() => {
-                            router.push('/tenant/dashboard');
+                            router.push('/success-page');
                         }, 3000);
                     }
                 } catch (err) {
                     console.error('Error parsing WebSocket message:', err);
                 }
             };
-
-            ws.onerror = (error) => {
+    
+            s.onerror = (error) => {
                 console.error('WebSocket error:', error);
-                setState(prev => ({ ...prev, error: PAYMENT_MESSAGES.WEBSOCKET_ERROR }));
+                setState(prev => ({ ...prev, error: 'Connection error occurred' }));
             };
-
-            ws.onclose = () => {
+    
+            s.onclose = () => {
                 console.log('WebSocket connection closed');
             };
-
-            setState(prev => ({ ...prev, wsConnection: ws }));
+    
+            setState(prev => ({ ...prev, wsConnection: s }));
         } catch (err) {
             console.error('Failed to create WebSocket:', err);
-            setState(prev => ({
-                ...prev,
-                error: err instanceof Error ? err.message : PAYMENT_MESSAGES.CONNECTION_ERROR
+            setState(prev => ({ 
+                ...prev, 
+                error: err instanceof Error ? err.message : 'Connection failed' 
             }));
         }
-    }, [invoiceId, router]);
+    }, [e, router]);
 
     const handleCreatePayment = useCallback(async () => {
         if (!state.invoice) return;
