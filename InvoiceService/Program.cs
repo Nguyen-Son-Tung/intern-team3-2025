@@ -173,6 +173,28 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.UseWebSockets();
+
+app.Map("/ws/payment-status/{invoiceId:int}", async context =>
+{
+    if (!context.WebSockets.IsWebSocketRequest)
+    {
+        context.Response.StatusCode = 400;
+        return;
+    }
+
+    var invoiceIdStr = context.Request.RouteValues["invoiceId"]?.ToString();
+    var invoiceId = int.Parse(invoiceIdStr!);
+
+    var handler = context.RequestServices.GetRequiredService<PaymentWebSocketHandler>();
+
+    var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+
+    Console.WriteLine($"WebSocket connected for invoice {invoiceId}");
+
+    await handler.HandleWebSocketAsync(webSocket, invoiceId);
+});
+
 // Configure the HTTP request pipeline.
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -180,9 +202,6 @@ app.UseSwaggerUI();
 app.UseHttpsRedirection();
 
 app.UseCors("AllowFE");
-
-// Enable WebSocket support
-app.UseWebSockets();
 
 app.UseAuthentication();
 app.UseAuthorization();
