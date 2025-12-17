@@ -27,12 +27,8 @@ export const getWebSocketUrl = (invoiceId: string): string => {
     if (!INVOICE_API_URL) {
         throw new Error('Cấu hình API chưa đúng. Vui lòng liên hệ admin.');
     }
-
     try {
-        const url = new URL(INVOICE_API_URL);
-        const wsProtocol = url.protocol === 'https:' ? 'wss' : 'ws';
-        const host = url.host;
-        return `${wsProtocol}://${host}/ws/payment-status/${invoiceId}`;
+        return `/invoice-api/ws/payment-status/${invoiceId}`;
     } catch {
         throw new Error('Không thể kết nối đến server. Vui lòng thử lại.');
     }
