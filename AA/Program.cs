@@ -10,18 +10,18 @@ using Microsoft.OpenApi.Models;
 using AA.Features.Users;
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Cors
-string allowedOrigins = builder.Configuration
-                             .GetSection("Cors:AllowedOrigins")
-                             .Get<string>() ?? string.Empty;
+// Configure CORS
+var origins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? Array.Empty<string>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFE", policy =>
     {
-        policy.WithOrigins(allowedOrigins)
+        policy.WithOrigins(origins)
               .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+              .AllowAnyMethod();
     });
 });
 
