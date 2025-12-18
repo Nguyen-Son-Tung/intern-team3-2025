@@ -97,14 +97,14 @@ const PendingInvoiceList: React.FC<{ data: PendingInvoiceListItem[] }> = ({ data
                             <span className="text-sm">⏳</span>
                             <span className="text-sm font-semibold">Chờ thanh toán tháng này</span>
                         </div>
-                        <div className="flex gap-2">
+                        {/* <div className="flex gap-2">
                             <button className="px-3 py-1 text-xs bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors">
                                 Nhắc nhở
                             </button>
                             <button className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
                                 Liên hệ
                             </button>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             ))
@@ -148,14 +148,14 @@ const NearExpiryContractList: React.FC<{ data: NearExpiryContractListItem[] }> =
                             <span className="text-sm">📅</span>
                             <span className="text-sm font-semibold">Còn {item.remainingDays} ngày</span>
                         </div>
-                        <div className="flex gap-2">
+                        {/* <div className="flex gap-2">
                             <button className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
                                 Gia hạn
                             </button>
                             <button className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
                                 Liên hệ
                             </button>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             ))
@@ -196,14 +196,14 @@ const AbnormalReadingList: React.FC<{ data: AbnormalReadingListItem[] }> = ({ da
                             <span className="text-sm">⚠️</span>
                             <span className="text-sm font-semibold">Tiêu thụ bất thường</span>
                         </div>
-                        <div className="flex gap-2">
+                        {/* <div className="flex gap-2">
                             <button className="px-3 py-1 text-xs bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors">
                                 Kiểm tra
                             </button>
                             <button className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
                                 Liên hệ
                             </button>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             ))
