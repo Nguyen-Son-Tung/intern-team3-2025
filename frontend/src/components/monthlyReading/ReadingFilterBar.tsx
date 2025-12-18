@@ -55,14 +55,7 @@ export default function ReadingFilterBar({
         >
           Chờ nộp
         </button>
-        <button
-          onClick={() => setStatusFilter("Overdue")}
-          className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
-            statusFilter === "Overdue" ? "bg-white text-red-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          Quá hạn
-        </button>
+      
       </div>
 
       {/* Dropdown lọc Nhà/Tháng/Năm */}

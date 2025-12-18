@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal, DashboardCard } from '@/components/dashboard';
+import ConfirmModal from '@/components/common/ConfirmModal';
 import { OwnerDashboardData, OverdueInvoiceListItem, PendingInvoiceListItem, AbnormalReadingListItem, NearExpiryContractListItem, BuildingPerformance } from '@/types/dashboard';
 import { fetchOwnerDashboardData } from '@/services/dashboardService';
 
@@ -10,206 +11,247 @@ import { fetchOwnerDashboardData } from '@/services/dashboardService';
 const RevenueChart = React.lazy(() => import('@/components/dashboard').then(module => ({ default: module.RevenueChart })));
 
 // === MODAL LIST COMPONENTS - IMPROVED DESIGN ===
-const OverdueInvoiceList: React.FC<{ data: OverdueInvoiceListItem[] }> = ({ data }) => (
-    <div className="space-y-4">
-        {data.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-                <div className="text-4xl mb-2">✅</div>
-                <p>Không có hóa đơn quá hạn nào</p>
-            </div>
-        ) : (
-            data.map((item) => (
-                <div key={item.id} className="bg-red-50 border border-red-200 rounded-lg p-4 transition-all duration-200 hover:shadow-md">
-                    <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="text-lg font-bold text-red-700">{item.amount}</span>
-                                <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">
-                                    QUÁ HẠN
-                                </span>
-                            </div>
-                            <div className="text-sm text-gray-700 font-medium">
-                                {item.houseName} - {item.roomNumber}
-                            </div>
-                            <div className="text-sm text-gray-700 font-medium">
-                                Khách hàng: {item.tenantName}
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <div className="text-xs text-gray-500 mb-1">Hạn thanh toán</div>
-                            <div className="text-sm font-semibold text-gray-800">{item.dueDate}</div>
-                        </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1 text-red-600">
-                            <span className="text-sm">⏰</span>
-                            <span className="text-sm font-semibold">Quá {item.overdueDays} ngày</span>
-                        </div>
-                        <div className="flex gap-2">
-                            <button className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
-                                Thu tiền
-                            </button>
-                            <button className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
-                                Liên hệ
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            ))
-        )}
-    </div>
-);
+const OverdueInvoiceList: React.FC<{ data: OverdueInvoiceListItem[] }> = ({ data }) => {
+    const router = useRouter(); 
 
-const PendingInvoiceList: React.FC<{ data: PendingInvoiceListItem[] }> = ({ data }) => (
-    <div className="space-y-4">
-        {data.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-                <div className="text-4xl mb-2">✅</div>
-                <p>Không có hóa đơn chờ thanh toán</p>
-            </div>
-        ) : (
-            data.map((item) => (
-                <div key={item.id} className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 hover:bg-yellow-100 transition-all duration-200 hover:shadow-md">
-                    <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="text-lg font-bold text-yellow-700">{item.amount}</span>
-                                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
-                                    CHỜ TT
-                                </span>
-                            </div>
-                            <div className="text-sm text-gray-700 font-medium">
-                                {item.roomNumber}
-                            </div>
-                            <div className="text-sm text-gray-700 font-medium">
-                                 Khách hàng: {item.tenantName}
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <div className="text-xs text-gray-500 mb-1">Ngày tạo</div>
-                            <div className="text-sm font-semibold text-gray-800">{item.invoiceDate}</div>
-                        </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1 text-yellow-600">
-                            <span className="text-sm">⏳</span>
-                            <span className="text-sm font-semibold">Chờ thanh toán tháng này</span>
-                        </div>
-                        {/* <div className="flex gap-2">
-                            <button className="px-3 py-1 text-xs bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors">
-                                Nhắc nhở
-                            </button>
-                            <button className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
-                                Liên hệ
-                            </button>
-                        </div> */}
-                    </div>
+    return (
+        <div className="space-y-4">
+            {data.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                    <div className="text-4xl mb-2">✅</div>
+                    <p>Không có hóa đơn quá hạn nào</p>
                 </div>
-            ))
-        )}
-    </div>
-);
+            ) : (
+                data.map((item) => (
+                    <div key={item.id} className="bg-red-50 border border-red-200 rounded-lg p-4 transition-all duration-200 hover:shadow-md">
+                        <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-lg font-bold text-red-700">{item.amount}</span>
+                                    <span className="px-2 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">
+                                        QUÁ HẠN
+                                    </span>
+                                </div>
+                                <div className="text-sm text-gray-700 font-medium">
+                                    {item.houseName} - {item.roomNumber}
+                                </div>
+                                <div className="text-sm text-gray-700 font-medium">
+                                    Khách hàng: {item.tenantName}
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-xs text-gray-500 mb-1">Hạn thanh toán</div>
+                                <div className="text-sm font-semibold text-gray-800">{item.dueDate}</div>
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1 text-red-600">
+                                <span className="text-sm">⏰</span>
+                                <span className="text-sm font-semibold">Quá {item.overdueDays} ngày</span>
+                            </div>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={() => router.push('/owner/invoices')}
+                                    className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                                >
+                                    Thu tiền
+                                </button>
+                                <button 
+                                    onClick={() => router.push('/owner/invoices')}
+                                    className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                                >
+                                    Liên hệ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ))
+            )}
+        </div>
+    );
+};
 
-const NearExpiryContractList: React.FC<{ data: NearExpiryContractListItem[] }> = ({ data }) => (
-    <div className="space-y-4">
-        {data.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-                <div className="text-4xl mb-2">📄</div>
-                <p>Không có hợp đồng sắp hết hạn</p>
-            </div>
-        ) : (
-            data.map((item) => (
-                <div key={item.id} className="bg-blue-50 border border-blue-200 rounded-lg p-4 hover:bg-blue-100 transition-all duration-200 hover:shadow-md">
-                    <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="text-lg font-bold text-gray-800">Phòng {item.roomNumber}</span>
-                                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
-                                    SẮP HẾT HẠN HỢP ĐỒNG
-                                </span>
-                            </div>
-                            <div className="text-sm text-gray-700 font-medium">
-                                {item.houseName}
-                            </div>
-                            <div className="text-sm text-gray-700 font-medium">
-                                Khách hàng: {item.tenantName}
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <div className="text-xs text-gray-500 mb-1">Ngày kết thúc</div>
-                            <div className="text-sm font-semibold text-gray-800">{item.endDate}</div>
-                        </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1 text-blue-600">
-                            <span className="text-sm">📅</span>
-                            <span className="text-sm font-semibold">Còn {item.remainingDays} ngày</span>
-                        </div>
-                        {/* <div className="flex gap-2">
-                            <button className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
-                                Gia hạn
-                            </button>
-                            <button className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
-                                Liên hệ
-                            </button>
-                        </div> */}
-                    </div>
-                </div>
-            ))
-        )}
-    </div>
-);
+const PendingInvoiceList: React.FC<{ data: PendingInvoiceListItem[] }> = ({ data }) => {
+    const router = useRouter();
 
-const AbnormalReadingList: React.FC<{ data: AbnormalReadingListItem[] }> = ({ data }) => (
-    <div className="space-y-4">
-        {data.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-                <div className="text-4xl mb-2">📊</div>
-                <p>Không có chỉ số tiêu thụ bất thường</p>
-            </div>
-        ) : (
-            data.map((item) => (
-                <div key={`${item.id}-${item.type}`} className="bg-orange-50 border border-orange-200 rounded-lg p-4 hover:bg-orange-100 transition-all duration-200 hover:shadow-md">
-                    <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="text-lg font-bold text-gray-800">Phòng {item.roomNumber}</span>
-                                <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-semibold rounded-full">
-                                    {item.type === 'Electricity' ? 'Điện' : 'Nước'}
-                                </span>
-                            </div>
-                            <div className="text-sm text-gray-700 font-medium">
-                                {item.houseName} - Khách: {item.tenantName}
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <div className="text-xs text-gray-500 mb-1">Mức tăng</div>
-                            <div className="text-lg font-bold text-red-600">+{item.increaseAmount} {item.type === 'Electricity' ? 'kWh điện' : 'm³ nước'}</div>
-                        </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1 text-orange-600">
-                            <span className="text-sm">⚠️</span>
-                            <span className="text-sm font-semibold">Tiêu thụ bất thường</span>
-                        </div>
-                        {/* <div className="flex gap-2">
-                            <button className="px-3 py-1 text-xs bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors">
-                                Kiểm tra
-                            </button>
-                            <button className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
-                                Liên hệ
-                            </button>
-                        </div> */}
-                    </div>
+    return (
+        <div className="space-y-4">
+            {data.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                    <div className="text-4xl mb-2">✅</div>
+                    <p>Không có hóa đơn chờ thanh toán</p>
                 </div>
-            ))
-        )}
-    </div>
-);
+            ) : (
+                data.map((item) => (
+                    <div key={item.id} className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 hover:bg-yellow-100 transition-all duration-200 hover:shadow-md">
+                        <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-lg font-bold text-yellow-700">{item.amount}</span>
+                                    <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
+                                        CHỜ TT
+                                    </span>
+                                </div>
+                                <div className="text-sm text-gray-700 font-medium">
+                                    {item.roomNumber}
+                                </div>
+                                <div className="text-sm text-gray-700 font-medium">
+                                     Khách hàng: {item.tenantName}
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-xs text-gray-500 mb-1">Ngày tạo</div>
+                                <div className="text-sm font-semibold text-gray-800">{item.invoiceDate}</div>
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1 text-yellow-600">
+                                <span className="text-sm">⏳</span>
+                                <span className="text-sm font-semibold">Chờ thanh toán tháng này</span>
+                            </div>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={() => router.push('/owner/invoices')}
+                                    className="px-3 py-1 text-xs bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors"
+                                >
+                                    Nhắc nhở
+                                </button>
+                                <button 
+                                    onClick={() => router.push('/owner/invoices')}
+                                    className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                                >
+                                    Liên hệ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ))
+            )}
+        </div>
+    );
+};
+
+const NearExpiryContractList: React.FC<{ data: NearExpiryContractListItem[] }> = ({ data }) => {
+    const router = useRouter();
+
+    return (
+        <div className="space-y-4">
+            {data.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                    <div className="text-4xl mb-2">📄</div>
+                    <p>Không có hợp đồng sắp hết hạn</p>
+                </div>
+            ) : (
+                data.map((item) => (
+                    <div key={item.id} className="bg-blue-50 border border-blue-200 rounded-lg p-4 hover:bg-blue-100 transition-all duration-200 hover:shadow-md">
+                        <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-lg font-bold text-gray-800">Phòng {item.roomNumber}</span>
+                                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+                                        SẮP HẾT HẠN HỢP ĐỒNG
+                                    </span>
+                                </div>
+                                <div className="text-sm text-gray-700 font-medium">
+                                    {item.houseName}
+                                </div>
+                                <div className="text-sm text-gray-700 font-medium">
+                                    Khách hàng: {item.tenantName}
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-xs text-gray-500 mb-1">Ngày kết thúc</div>
+                                <div className="text-sm font-semibold text-gray-800">{item.endDate}</div>
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1 text-blue-600">
+                                <span className="text-sm">📅</span>
+                                <span className="text-sm font-semibold">Còn {item.remainingDays} ngày</span>
+                            </div>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={() => router.push('/owner/contracts')}
+                                    className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                                >
+                                    Gia hạn
+                                </button>
+                                <button 
+                                    onClick={() => router.push('/owner/contracts')}
+                                    className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                                >
+                                    Liên hệ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ))
+            )}
+        </div>
+    );
+};
+
+const AbnormalReadingList: React.FC<{ data: AbnormalReadingListItem[] }> = ({ data }) => {
+    const router = useRouter(); // Khởi tạo router
+
+    return (
+        <div className="space-y-4">
+            {data.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                    <div className="text-4xl mb-2">📊</div>
+                    <p>Không có chỉ số tiêu thụ bất thường</p>
+                </div>
+            ) : (
+                data.map((item) => (
+                    <div key={`${item.id}-${item.type}`} className="bg-orange-50 border border-orange-200 rounded-lg p-4 hover:bg-orange-100 transition-all duration-200 hover:shadow-md">
+                        <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-lg font-bold text-gray-800">Phòng {item.roomNumber}</span>
+                                    <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-semibold rounded-full">
+                                        {item.type === 'Electricity' ? 'Điện' : 'Nước'}
+                                    </span>
+                                </div>
+                                <div className="text-sm text-gray-700 font-medium">
+                                    {item.houseName} - Khách: {item.tenantName}
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-xs text-gray-500 mb-1">Mức tăng</div>
+                                <div className="text-lg font-bold text-red-600">+{item.increaseAmount} {item.type === 'Electricity' ? 'kWh điện' : 'm³ nước'}</div>
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1 text-orange-600">
+                                <span className="text-sm">⚠️</span>
+                                <span className="text-sm font-semibold">Tiêu thụ bất thường</span>
+                            </div>
+                            {/* Đã bỏ comment và thêm router.push */}
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={() => router.push('/owner/monthlyreading')}
+                                    className="px-3 py-1 text-xs bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors"
+                                >
+                                    Kiểm tra
+                                </button>
+                                <button 
+                                    onClick={() => router.push('/owner/monthlyreading')}
+                                    className="px-3 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
+                                >
+                                    Liên hệ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ))
+            )}
+        </div>
+    );
+};
 
 
 
@@ -524,31 +566,55 @@ const OwnerDashboardPage: React.FC = () => {
     const { data, loading, criticalDataLoaded } = useProgressiveDashboardData();
     const [modalType, setModalType] = useState<'overdue' | 'pending' | 'abnormal' | 'contract' | null>(null);
 
+    const [popup, setPopup] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+    }>({ isOpen: false, title: "", message: "" });
+
+    const closePopup = () => setPopup(prev => ({ ...prev, isOpen: false }));
+
     const openModal = (type: typeof modalType) => {
         if (!data) return;
 
-        let list: (OverdueInvoiceListItem | PendingInvoiceListItem | AbnormalReadingListItem | NearExpiryContractListItem)[] = [];
         let listLength = 0;
+        let titleText = "";
 
         switch (type) {
-            case 'overdue': list = data.overdueDetails || []; listLength = list.length; break;
-            case 'pending': list = data.pendingDetails || []; listLength = list.length; break;
-            case 'abnormal': list = data.abnormalReadingDetails || []; listLength = list.length; break;
-            case 'contract': list = data.nearExpiryContractDetails || []; listLength = list.length; break;
+            case 'overdue': 
+                listLength = data.overdueDetails?.length || 0; 
+                titleText = "Hóa đơn Quá hạn";
+                break;
+            case 'pending': 
+                listLength = data.pendingDetails?.length || 0; 
+                titleText = "Hóa đơn Chờ thanh toán";
+                break;
+            case 'abnormal': 
+                listLength = data.abnormalReadingDetails?.length || 0; 
+                titleText = "Tiêu thụ Bất thường";
+                break;
+            case 'contract': 
+                listLength = data.nearExpiryContractDetails?.length || 0; 
+                titleText = "Hợp đồng Sắp hết hạn";
+                break;
             default: break;
         }
 
         if (listLength > 0) {
             setModalType(type);
         } else {
-            alert(`Không có dữ liệu cho ${type === 'overdue' ? 'Hóa đơn Quá hạn' : type === 'pending' ? 'Hóa đơn Chờ thanh toán' : type === 'abnormal' ? 'Tiêu thụ Bất thường' : 'Hợp đồng Sắp hết hạn'}.`);
+            setPopup({
+                isOpen: true,
+                title: "Thông báo",
+                message: `Hiện tại không có dữ liệu cho ${titleText}.`
+            });
         }
     };
+
     const closeModal = () => setModalType(null);
 
     if (loading || !criticalDataLoaded || !data) return <DashboardSkeleton />;
 
-    // Lấy dữ liệu cho Modal
     let modalTitle = '';
     let modalContent: React.ReactNode = null;
 
@@ -569,39 +635,29 @@ const OwnerDashboardPage: React.FC = () => {
             modalTitle = `📄 ${data.nearExpiryContractDetails.length} Hợp đồng Sắp hết hạn (30 ngày)`;
             modalContent = <NearExpiryContractList data={data.nearExpiryContractDetails} />;
             break;
-        default:
-            break;
+        default: break;
     }
-
 
     return (
         <div className="p-4 sm:p-8 bg-gray-50 min-h-screen font-sans">
             <h1 className="text-3xl font-bold text-gray-800 mb-8">Bảng Tổng Kết Chủ sở hữu</h1>
 
-            {/* 🔔 SECTION 1: CẢNH BÁO VÀ HÀNH ĐỘNG KHẨN CẤP (Đã dồn 5 thẻ vào 1 hàng) */}
             <h2 className="text-xl font-semibold text-red-700 mb-4">🔔 Cảnh báo và Hành động Khẩn cấp</h2>
-
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
-
-                {/* 1. Tổng tiền Quá hạn TT (Click to Modal) */}
                 <DashboardCard
                     title={`⛔ Hóa đơn Quá hạn TT (${data.overdueDetails.length} Hóa đơn)`}
                     value={data.invoiceSummary.overdueAmount}
                     color="red"
                     onClick={() => openModal('overdue')}
-                    isClickable={data.overdueDetails.length > 0}
+                    isClickable={true}
                 />
-
-                {/* 2. Chưa TT Tháng này (Click to Modal) */}
                 <DashboardCard
                     title={`⏳ Hóa đơn Chờ TT Tháng này (${data.pendingDetails.length} Hóa đơn)`}
                     value={data.invoiceSummary.currentUnpaidAmount}
                     color="yellow"
                     onClick={() => openModal('pending')}
-                    isClickable={data.pendingDetails.length > 0}
+                    isClickable={true}
                 />
-
-                {/* 3. Sự cố Đang chờ (Click to Navigate) */}
                 <DashboardCard
                     title="🛠️ Sự cố Đang chờ xử lý"
                     value={`${data.pendingIncidents} Sự cố`}
@@ -609,89 +665,50 @@ const OwnerDashboardPage: React.FC = () => {
                     onClick={() => router.push('/owner/tickets')}
                     isClickable={true}
                 />
-
-                {/* 4. Phòng gần hết HĐ Thuê (Click to Modal) - 30 ngày */}
                 <DashboardCard
                     title={`📄 HĐ Thuê Sắp hết hạn (${data.endContractsCount} Hợp đồng) - 30 ngày`}
                     value={`${data.endContractsCount} Phòng`}
                     color="red"
                     onClick={() => openModal('contract')}
-                    isClickable={data.endContractsCount > 0}
+                    isClickable={true}
                 />
-
-                {/* 5. Tiêu thụ Bất thường (Click to Modal) */}
                 <DashboardCard
                     title={`⚡ Tiêu thụ Điện/Nước Bất thường (${data.abnormalReadingCount})`}
                     value={`${data.abnormalReadingCount} Chỉ số`}
                     color="yellow"
                     onClick={() => openModal('abnormal')}
-                    isClickable={data.abnormalReadingCount > 0}
+                    isClickable={true}
                 />
-
             </div>
 
-            {/* 📊 SECTION 2: HIỆU SUẤT VÀ TÀI CHÍNH */}
             <h2 className="text-xl font-semibold text-indigo-700 mb-4">📊 Hiệu suất & Tài chính Tổng quan</h2>
-
-            {/* Hàng 1: Biểu đồ Dòng tiền */}
             <div className="grid grid-cols-1 gap-6 mb-8">
-                <Suspense fallback={
-                    <div className="bg-white p-6 rounded-xl shadow-lg animate-pulse">
-                        <div className="h-6 bg-gray-200 rounded w-64 mb-4"></div>
-                        <div className="h-64 bg-gray-100 rounded"></div>
-                    </div>
-                }>
-                    <RevenueChart
-                        data={data.revenueChartData}
-                        annualTurnover={data.annualTurnover}
-                    />
-                </Suspense>
+               <Suspense fallback={<div className="h-64 bg-gray-100 rounded animate-pulse"></div>}>
+                    <RevenueChart data={data.revenueChartData} annualTurnover={data.annualTurnover} />
+               </Suspense>
             </div>
-
-            {/* Hàng 2: Hai biểu đồ Pie Chart (Phòng & Doanh thu) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <Suspense fallback={
-                    <div className="bg-white p-6 rounded-xl shadow-lg animate-pulse">
-                        <div className="h-6 bg-gray-200 rounded w-48 mb-4"></div>
-                        <div className="flex items-center">
-                            <div className="w-40 h-40 bg-gray-100 rounded-full mr-6"></div>
-                            <div className="flex-1 space-y-3">
-                                {Array.from({ length: 3 }).map((_, j) => (
-                                    <div key={j} className="h-12 bg-gray-100 rounded"></div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                }>
-                    <RoomOccupancyByBuildingPieChart
-                        data={data.buildingPerformanceData}
-                        totalRooms={data.totalRooms}
-                    />
+                <Suspense fallback={<div className="h-64 bg-gray-100 rounded animate-pulse"></div>}>
+                    <RoomOccupancyByBuildingPieChart data={data.buildingPerformanceData} totalRooms={data.totalRooms} />
                 </Suspense>
-                <Suspense fallback={
-                    <div className="bg-white p-6 rounded-xl shadow-lg animate-pulse">
-                        <div className="h-6 bg-gray-200 rounded w-48 mb-4"></div>
-                        <div className="flex items-center">
-                            <div className="w-40 h-40 bg-gray-100 rounded-full mr-6"></div>
-                            <div className="flex-1 space-y-3">
-                                {Array.from({ length: 3 }).map((_, j) => (
-                                    <div key={j} className="h-12 bg-gray-100 rounded"></div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                }>
-                    <RevenueByBuildingPieChart
-                        data={data.buildingPerformanceData}
-                    />
+                <Suspense fallback={<div className="h-64 bg-gray-100 rounded animate-pulse"></div>}>
+                    <RevenueByBuildingPieChart data={data.buildingPerformanceData} />
                 </Suspense>
             </div>
 
-
-            {/* MODAL */}
             <Modal title={modalTitle} isOpen={modalType !== null} onClose={closeModal}>
                 {modalContent}
             </Modal>
+
+            <ConfirmModal 
+                isOpen={popup.isOpen}
+                onClose={closePopup}
+                onConfirm={closePopup}
+                title={popup.title}
+                message={popup.message}
+                confirmText="Đóng"
+                hideCancel={true} 
+            />
         </div>
     );
 };

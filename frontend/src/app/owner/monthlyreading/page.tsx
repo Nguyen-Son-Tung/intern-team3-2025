@@ -23,10 +23,23 @@ export default function OwnerUtilitiesPage() {
   const [selectedHouseName, setSelectedHouseName] = useState<string>("ALL");
   const [selectedReading, setSelectedReading] = useState<MonthlyReading | null>(null);
 
-  // State xử lý hành động (Nhắc nộp hoặc Tạo kỳ mới)
+  // State xử lý hành động
   const [actionType, setActionType] = useState<"REMIND_SUBMISSION" | "NEW_CYCLE" | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isTriggeringAutoInvoice, setIsTriggeringAutoInvoice] = useState(false);
+
+  // --- STATE POPUP THÔNG BÁO ---
+  const [popup, setPopup] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        type: "success" | "error" | "warning";
+  }>({ isOpen: false, title: "", message: "", type: "success" });
+
+  const closePopup = () => setPopup(prev => ({ ...prev, isOpen: false }));
+  const showSuccess = (msg: string) => setPopup({ isOpen: true, title: "Thành công", message: msg, type: "success" });
+  const showError = (msg: string) => setPopup({ isOpen: true, title: "Lỗi", message: msg, type: "error" });
+  const showWarning = (msg: string) => setPopup({ isOpen: true, title: "Lưu ý", message: msg, type: "warning" });
 
   // --- LOGIC: TẠO DANH SÁCH NĂM ĐỘNG ---
   const years = useMemo(() => {
@@ -40,7 +53,7 @@ export default function OwnerUtilitiesPage() {
     return list;
   }, []);
 
-  // --- Helper: Tính toán trạng thái (Confirmed / Pending / Overdue) ---
+  // --- Helper: Tính toán trạng thái ---
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const calculateStatus = (item: any): ReadingStatus => {
     if (item.status === 1 || item.status === "Confirmed" || item.status === "confirmed") {
@@ -141,18 +154,16 @@ export default function OwnerUtilitiesPage() {
 
   // --- HANDLER: Mở Modal ---
 
-  // Mở modal nhắc nộp (gắn vào Card thống kê)
   const openRemindModal = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     if (!isCurrentMonthView) {
-      alert("Bạn chỉ có thể gửi nhắc nhở cho kỳ thu tiền hiện tại.");
+      showWarning("Bạn chỉ có thể gửi nhắc nhở cho kỳ thu tiền hiện tại.");
       return;
     }
     if (stats.countNotSubmitted === 0) return;
     setActionType("REMIND_SUBMISSION");
   };
 
-  // Mở modal báo kỳ mới 
   const openNewCycleModal = () => {
     setActionType("NEW_CYCLE");
   };
@@ -167,43 +178,39 @@ export default function OwnerUtilitiesPage() {
 
       if (actionType === "REMIND_SUBMISSION") {
         success = await sendRemindSubmission();
-        setActionType(null); // Đóng modal trước khi alert
-        if (success) alert(`Đã gửi thông báo nhắc nộp đến các phòng chưa hoàn thành.`);
-        else alert("Gửi thất bại. Vui lòng thử lại.");
+        setActionType(null); 
+        if (success) showSuccess(`Đã gửi thông báo nhắc nộp đến các phòng chưa hoàn thành.`);
+        else showError("Gửi thất bại. Vui lòng thử lại.");
       }
       else if (actionType === "NEW_CYCLE") {
-        // Lấy tháng/năm hiện tại để gửi thông báo kỳ mới
         const now = new Date();
         success = await triggerNewCycleNotification(now.getMonth() + 1, now.getFullYear());
         setActionType(null);
-        if (success) alert(`Đã phát động chu kỳ mới và gửi thông báo cho cư dân.`);
-        else alert("Có lỗi xảy ra (Có thể chu kỳ đã tồn tại).");
+        if (success) showSuccess(`Đã phát động chu kỳ mới và gửi thông báo cho cư dân.`);
+        else showError("Có lỗi xảy ra (Có thể chu kỳ đã tồn tại).");
       }
 
     } catch (error) {
       console.error(error);
-      alert("Lỗi kết nối.");
+      showError("Lỗi kết nối máy chủ.");
       setActionType(null);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Handler cho trigger auto invoice
   const handleTriggerAutoInvoice = async () => {
     try {
       setIsTriggeringAutoInvoice(true);
       const result = await triggerAutoInvoice();
       if (result.success) {
-        alert(`✅ ${result.message}`);
-        // Refresh data
-        window.location.reload();
+        showSuccess("Đã cập nhật hóa đơn thành công.");
       } else {
-        alert(`❌ Lỗi: ${result.message}`);
+        showError(`Lỗi: ${result.message}`);
       }
     } catch (error) {
       console.error(error);
-      alert("Lỗi kết nối.");
+      showError("Lỗi kết nối máy chủ.");
     } finally {
       setIsTriggeringAutoInvoice(false);
     }
@@ -237,10 +244,8 @@ export default function OwnerUtilitiesPage() {
             >
               {isTriggeringAutoInvoice ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              ) : (
-                ""
-              )}
-              {isTriggeringAutoInvoice ? "Đang tạo hóa đơn..." : "Tạo hóa đơn tự động"}
+              ) : null}
+              {isTriggeringAutoInvoice ? "Đang tạo..." : "Tạo hóa đơn tự động"}
             </button>
             <button
               onClick={openNewCycleModal}
@@ -255,8 +260,8 @@ export default function OwnerUtilitiesPage() {
         <ReadingStats
           stats={stats}
           isCurrentMonthView={isCurrentMonthView}
-          onRemindAllPending={openRemindModal} // Mở modal thay vì alert
-          isLoading={isProcessing && actionType === "REMIND_SUBMISSION"} // Hiển thị loading nếu đang nhắc nộp
+          onRemindAllPending={openRemindModal}
+          isLoading={isProcessing && actionType === "REMIND_SUBMISSION"}
         />
       </div>
 
@@ -283,7 +288,6 @@ export default function OwnerUtilitiesPage() {
         <UtilityReadingDetailModal reading={selectedReading} onClose={() => setSelectedReading(null)} />
       )}
 
-      {/* Modal Xác Nhận Chung */}
       <ConfirmModal
         isOpen={!!actionType}
         onClose={() => !isProcessing && setActionType(null)}
@@ -297,6 +301,16 @@ export default function OwnerUtilitiesPage() {
         }
         confirmText="Xác nhận gửi"
         cancelText="Hủy bỏ"
+      />
+
+      <ConfirmModal 
+        isOpen={popup.isOpen}
+        onClose={closePopup} 
+        onConfirm={closePopup}
+        title={popup.title}
+        message={popup.message}
+        confirmText="Đóng"
+        hideCancel={true}
       />
     </div>
   );
