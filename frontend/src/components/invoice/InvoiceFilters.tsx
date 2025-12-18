@@ -40,7 +40,6 @@ export default function InvoiceFilters({
                 {[
                     { key: "ALL", label: "Tất cả", activeClass: "text-gray-900", baseClass: "text-gray-500" },
                     { key: "UNPAID", label: "Chưa thanh toán", activeClass: "text-orange-600", baseClass: "text-gray-500" },
-                    { key: "OVERDUE", label: "Quá hạn", activeClass: "text-red-600", baseClass: "text-gray-500" },
                     { key: "PAID", label: "Đã thanh toán", activeClass: "text-green-600", baseClass: "text-gray-500" }
                 ].map((item) => (
                     <button

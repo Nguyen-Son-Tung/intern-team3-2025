@@ -2,19 +2,22 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { House, CreateHouseDto, UpdateHouseDto } from "@/types/property"; 
+import { House, CreateHouseDto } from "@/types/property"; 
 import { getHouses, createHouse, updateHouse, deleteHouse } from "@/services/propertyService";
 
 export default function HousesPage() {
   const [houses, setHouses] = useState<House[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // State tìm kiếm
   const [searchTerm, setSearchTerm] = useState("");
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingHouse, setEditingHouse] = useState<House | null>(null);
+  
   const [formData, setFormData] = useState<CreateHouseDto>({ name: "", address: "" });
+
+  const [errors, setErrors] = useState<{ name?: string; address?: string }>({});
+
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadHouses();
@@ -32,7 +35,6 @@ export default function HousesPage() {
     }
   };
 
-  // --- LOGIC LỌC DỮ LIỆU ---
   const filteredHouses = useMemo(() => {
       return houses.filter(h => 
         h.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -43,27 +45,59 @@ export default function HousesPage() {
   // --- FORM HANDLING ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Reset lỗi trước khi kiểm tra lại
+    setErrors({});
+
+    const trimmedName = formData.name.trim();
+    const trimmedAddress = formData.address.trim();
+
+    // --- VALIDATION LOGIC ---
+    const newErrors: { name?: string; address?: string } = {};
+    let hasError = false;
+
+    if (!trimmedName) {
+        newErrors.name = "Tên nhà trọ không được để trống hoặc chỉ chứa khoảng trắng.";
+        hasError = true;
+    }
+    if (!trimmedAddress) {
+        newErrors.address = "Địa chỉ không được để trống hoặc chỉ chứa khoảng trắng.";
+        hasError = true;
+    }
+
+    // Nếu có lỗi thì set state và dừng lại 
+    if (hasError) {
+        setErrors(newErrors);
+        return;
+    }
+
+    // Dữ liệu sạch để gửi đi
+    const cleanData = {
+        name: trimmedName,
+        address: trimmedAddress
+    };
+
+    setSubmitting(true);
     try {
       if (editingHouse) {
-        const updateData: UpdateHouseDto = {
-            name: formData.name,
-            address: formData.address
-        };
-        await updateHouse(editingHouse.id, updateData);
+        await updateHouse(editingHouse.id, cleanData);
       } else {
-        await createHouse(formData);
+        await createHouse(cleanData);
       }
       setIsModalOpen(false);
       resetForm();
       loadHouses();
     } catch { 
-      alert("Đã có lỗi xảy ra");
+      alert("Đã có lỗi xảy ra khi lưu dữ liệu.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleEdit = (house: House) => {
     setEditingHouse(house);
     setFormData({ name: house.name, address: house.address });
+    setErrors({}); // Xóa lỗi cũ nếu có
     setIsModalOpen(true);
   };
 
@@ -73,7 +107,7 @@ export default function HousesPage() {
         await deleteHouse(id);
         loadHouses();
       } catch {
-        alert("Không thể xóa nhà này");
+        alert("Không thể xóa nhà này (có thể do đang có phòng hoặc hợp đồng liên kết).");
       }
     }
   };
@@ -81,12 +115,22 @@ export default function HousesPage() {
   const resetForm = () => {
     setEditingHouse(null);
     setFormData({ name: "", address: "" });
+    setErrors({}); // Xóa lỗi khi reset
+  };
+
+  // Hàm xử lý khi user nhập liệu (vừa update data, vừa xóa lỗi)
+  const handleChange = (field: keyof CreateHouseDto, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Nếu đang có lỗi ở trường này thì xóa đi
+    if (errors[field]) {
+        setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
   };
 
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen text-gray-800"> 
       
-      {/* --- HEADER SECTION --- */}
+      {/* Header */}
       <div className="flex flex-col gap-6">
         <div className="flex justify-between items-start">
             <div>
@@ -102,7 +146,7 @@ export default function HousesPage() {
         </div>
       </div>
 
-      {/* --- TOOLBAR / FILTER --- */}
+      {/* Toolbar */}
       <div className="bg-white p-4 rounded-lg shadow-sm border flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="w-full md:w-96">
               <input 
@@ -118,7 +162,7 @@ export default function HousesPage() {
           </div>
       </div>
 
-      {/* --- TABLE VIEW --- */}
+      {/* Table */}
       {loading ? (
         <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div></div>
       ) : (
@@ -193,23 +237,41 @@ export default function HousesPage() {
               <div className="mb-4">
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tên nhà trọ <span className="text-red-500">*</span></label>
                 <input 
-                  className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" 
+                  // --- 3. Đổi class border dựa trên lỗi ---
+                  className={`w-full border p-2.5 rounded-lg focus:ring-2 outline-none transition ${
+                    errors.name 
+                        ? "border-red-500 focus:border-red-500 focus:ring-red-200" 
+                        : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                  }`}
                   value={formData.name} 
-                  onChange={e => setFormData({...formData, name: e.target.value})} 
+                  onChange={e => handleChange("name", e.target.value)} 
                   placeholder="Ví dụ: Nhà trọ Hạnh Phúc 1"
-                  required 
+                  // Bỏ required của HTML5 để dùng custom validation của mình
                 />
+                {/* --- 4. Hiển thị dòng lỗi đỏ --- */}
+                {errors.name && (
+                    <p className="text-red-500 text-xs mt-1 animate-pulse">{errors.name}</p>
+                )}
               </div>
+
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Địa chỉ <span className="text-red-500">*</span></label>
                 <input 
-                  className="w-full border border-gray-300 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" 
+                  className={`w-full border p-2.5 rounded-lg focus:ring-2 outline-none transition ${
+                    errors.address 
+                        ? "border-red-500 focus:border-red-500 focus:ring-red-200" 
+                        : "border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                  }`}
                   value={formData.address} 
-                  onChange={e => setFormData({...formData, address: e.target.value})} 
+                  onChange={e => handleChange("address", e.target.value)} 
                   placeholder="Ví dụ: 123 đường ABC, Quận XYZ..."
-                  required 
                 />
+                {/* --- 4. Hiển thị dòng lỗi đỏ --- */}
+                {errors.address && (
+                    <p className="text-red-500 text-xs mt-1 animate-pulse">{errors.address}</p>
+                )}
               </div>
+
               <div className="flex justify-end gap-3 pt-2">
                 <button 
                   type="button" 
@@ -220,9 +282,10 @@ export default function HousesPage() {
                 </button>
                 <button 
                   type="submit" 
-                  className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 shadow-sm transition"
+                  disabled={submitting}
+                  className={`px-5 py-2.5 text-white font-medium rounded-lg shadow-sm transition ${submitting ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                 >
-                  {editingHouse ? "Lưu thay đổi" : "Tạo mới"}
+                  {submitting ? "Đang lưu..." : (editingHouse ? "Lưu thay đổi" : "Tạo mới")}
                 </button>
               </div>
             </form>
