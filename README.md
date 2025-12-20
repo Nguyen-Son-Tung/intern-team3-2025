@@ -214,7 +214,6 @@ intern-team3-2025/
 ├── ReadingService/              # Meter Readings
 ├── TicketService/               # Support Tickets
 ├── docker-compose.yaml          # Container Orchestration
-├── start-services.sh            # Local Development Script
 └── README.md
 ```
 
