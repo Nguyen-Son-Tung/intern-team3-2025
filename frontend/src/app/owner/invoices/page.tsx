@@ -30,8 +30,20 @@ export default function OwnerInvoicesPage() {
     const [isRemindingAll, setIsRemindingAll] = useState(false);
     const [isTriggeringVisibility, setIsTriggeringVisibility] = useState(false);
     
-    // Thêm state bật tắt Modal
+    // State Modal Xác nhận Nhắc nợ
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+    // --- STATE POPUP THÔNG BÁO ---
+    const [popup, setPopup] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        type: "success" | "error" | "info";
+    }>({ isOpen: false, title: "", message: "", type: "info" });
+
+    const closePopup = () => setPopup(prev => ({ ...prev, isOpen: false }));
+    const showSuccess = (msg: string) => setPopup({ isOpen: true, title: "Thành công", message: msg, type: "success" });
+    const showError = (msg: string) => setPopup({ isOpen: true, title: "Lỗi", message: msg, type: "error" });
 
     // --- FETCH DATA ---
     useEffect(() => {
@@ -89,43 +101,40 @@ export default function OwnerInvoicesPage() {
 
     // --- HANDLERS ---
 
-    // Hàm 1: Chỉ dùng để mở Modal khi người dùng click vào thẻ "Cần thu"
     const openRemindModal = (e: React.MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
         if (countRemindable === 0 || isRemindingAll) return;
-        setShowConfirmModal(true); // Mở Modal
+        setShowConfirmModal(true); 
     }
 
-    // Hàm 2: Thực thi logic gọi API (Được gọi khi bấm "Đồng ý" trong Modal)
     const executeRemindAll = async () => {
         try {
-            setIsRemindingAll(true); // Bật loading trên Modal
-            
+            setIsRemindingAll(true); 
             const success = await remindAllUnpaid();
-            
-            // Tắt Modal trước khi hiện alert
             setShowConfirmModal(false);
 
             if (success) {
-                alert(`Đã gửi lệnh nhắc nợ thành công đến hệ thống.`);
+                showSuccess(`Đã gửi lệnh nhắc nợ thành công đến hệ thống.`);
             } else {
-                alert("Có lỗi xảy ra khi gửi lệnh nhắc nợ. Vui lòng thử lại.");
+                showError("Có lỗi xảy ra khi gửi lệnh nhắc nợ. Vui lòng thử lại.");
             }
         } catch (error) {
             console.error(error);
             setShowConfirmModal(false);
-            alert("Lỗi kết nối.");
+            showError("Lỗi kết nối máy chủ.");
         } finally {
             setIsRemindingAll(false);
         }
     }
+
     const handleTriggerVisibility = async () => {
         try {
             setIsTriggeringVisibility(true);
             const result = await triggerInvoiceVisibility();
             if (result.success) {
-                alert(`✅ ${result.message}`);
-                // Refresh data by re-fetching
+                showSuccess("Đã cập nhật trạng thái hiển thị hóa đơn thành công.");
+                
+                // Refresh data
                 const params: InvoiceApiParams = { page: currentPage, pageSize };
                 if (statusFilter !== "ALL") params.status = statusFilter;
                 if (selectedYear) params.year = selectedYear;
@@ -136,11 +145,11 @@ export default function OwnerInvoicesPage() {
                 setTotalPages(Math.ceil(data.length / pageSize) || 1);
                 setTotalInvoices(data.length);
             } else {
-                alert(`❌ Lỗi: ${result.message}`);
+                showError(`Lỗi: ${result.message}`);
             }
         } catch (error) {
             console.error(error);
-            alert("Lỗi kết nối.");
+            showError("Lỗi kết nối máy chủ.");
         } finally {
             setIsTriggeringVisibility(false);
         }
@@ -149,36 +158,34 @@ export default function OwnerInvoicesPage() {
     return (
         <div className="space-y-6 p-6 bg-gray-50 min-h-screen text-gray-800">
             <div className="flex flex-col gap-6">
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Quản lý hóa đơn</h2>
-                    <p className="text-gray-500 text-sm">Hóa đơn tháng {selectedMonth === "ALL" ? "Tất cả" : selectedMonth}/{selectedYear}</p>
+                
+                {/* --- HEADER --- */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-800">Quản lý hóa đơn</h2>
+                        <p className="text-gray-500 text-sm">
+                            Hóa đơn tháng {selectedMonth === "ALL" ? "Tất cả" : selectedMonth}/{selectedYear}
+                        </p>
+                    </div>
+
+                    <button
+                        onClick={handleTriggerVisibility}
+                        disabled={isTriggeringVisibility}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm font-medium text-sm transition-all"
+                    >
+                        {isTriggeringVisibility ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        ) : null}
+                        {isTriggeringVisibility ? "Đang cập nhật..." : "Hiển thị hóa đơn"}
+                    </button>
                 </div>
 
-                {/* Section Trigger Buttons */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Công cụ quản lý</h3>
-                    <div className="flex flex-wrap gap-4">
-                        <button
-                            onClick={handleTriggerVisibility}
-                            disabled={isTriggeringVisibility}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2"
-                        >
-                            {isTriggeringVisibility ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            ) : (
-                                ""
-                            )}
-                            {isTriggeringVisibility ? "Đang cập nhật..." : "Hiển thị hóa đơn"}
-                        </button>
-                    </div>
-                </div>
                 <InvoiceStats 
                     stats={stats} 
                     countRemindable={countRemindable} 
                     isRemindingAll={isRemindingAll} 
-                    onRemindAll={openRemindModal} // Gọi hàm mở Modal
+                    onRemindAll={openRemindModal} 
                 />
-                
             </div>
 
             <InvoiceFilters
@@ -213,16 +220,27 @@ export default function OwnerInvoicesPage() {
                 <InvoiceDetailModal invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} role="Owner" />
             )}
 
-            {/* 3. Render Modal xác nhận */}
+            {/* Modal Xác nhận Nhắc nợ */}
             <ConfirmModal 
                 isOpen={showConfirmModal}
-                onClose={() => !isRemindingAll && setShowConfirmModal(false)} // Không cho đóng khi đang loading
+                onClose={() => !isRemindingAll && setShowConfirmModal(false)} 
                 onConfirm={executeRemindAll}
                 title="Xác nhận nhắc thanh toán"
                 message={`Gửi nhắc nhở thanh toán đến ${countRemindable} khách thuê?`}
                 isLoading={isRemindingAll}
                 confirmText="Gửi thông báo"
                 cancelText="Quay lại"
+            />
+
+            {/* Modal Thông báo */}
+            <ConfirmModal 
+                isOpen={popup.isOpen}
+                onClose={closePopup} 
+                onConfirm={closePopup}
+                title={popup.title}
+                message={popup.message}
+                confirmText="Đóng"
+                hideCancel={true} 
             />
         </div>
     );
