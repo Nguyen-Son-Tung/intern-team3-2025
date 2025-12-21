@@ -24,7 +24,7 @@ const calculateDurationFromDates = (start: string, end: string): number => {
   const startDate = new Date(start);
   const endDate = new Date(end);
   const diffMonths = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
-  
+   
   if ([3, 6, 12].includes(diffMonths) && startDate.getDate() === endDate.getDate()) {
       return diffMonths;
   }
@@ -32,7 +32,7 @@ const calculateDurationFromDates = (start: string, end: string): number => {
 };
 
 export default function ContractModal({ isOpen, onClose, onSubmit, editingContract, rooms, tenants, activeContracts }: Props) {
-  
+   
   const [formData, setFormData] = useState<CreateContractDto & { status?: ContractStatus }>({
     roomId: 0,
     tenantId: "",
@@ -122,15 +122,15 @@ export default function ContractModal({ isOpen, onClose, onSubmit, editingContra
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div className="px-6 py-4 border-b bg-gray-50 flex justify-between items-center">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-auto overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
+        <div className="px-6 py-4 border-b bg-gray-50 flex justify-between items-center shrink-0">
           <h2 className="text-lg font-bold text-gray-800">
             {editingContract ? "Cập nhật Hợp Đồng" : "Tạo Hợp Đồng Mới"}
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold">✕</button>
         </div>
         
-        <form onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }} className="p-6 space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }} className="p-6 space-y-4 overflow-y-auto">
           
           {/* PHÒNG & KHÁCH */}
           <div>
@@ -170,7 +170,7 @@ export default function ContractModal({ isOpen, onClose, onSubmit, editingContra
           </div>
 
           {/* GIÁ & THỜI HẠN */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Giá thuê (VNĐ)</label>
               <input type="number" className={inputClass} value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} required min={0}/>
@@ -187,7 +187,7 @@ export default function ContractModal({ isOpen, onClose, onSubmit, editingContra
           </div>
 
           {/* NGÀY THÁNG */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                <label className="block text-sm font-semibold text-gray-700 mb-1">Ngày bắt đầu</label>
                <input type="date" className={`${inputClass} ${editingContract ? disabledClass : ''}`}
@@ -229,7 +229,7 @@ export default function ContractModal({ isOpen, onClose, onSubmit, editingContra
             </div>
           )}
 
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="flex justify-end gap-3 pt-4 border-t shrink-0">
             <button type="button" onClick={onClose} className="px-5 py-2.5 bg-gray-100 rounded-lg text-gray-700 font-medium">Hủy</button>
             <button 
                 type="submit" 

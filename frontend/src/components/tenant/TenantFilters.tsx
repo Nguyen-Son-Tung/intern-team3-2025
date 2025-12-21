@@ -9,6 +9,7 @@ interface TenantFiltersProps {
 export default function TenantFilters({ searchTerm, setSearchTerm }: TenantFiltersProps) {
     return (
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row gap-4 justify-between items-center">
+            {/* RESPONSIVE: Input search full width trên mobile, w-96 trên desktop */}
             <div className="relative w-full md:w-96">
                 <input
                     type="text"

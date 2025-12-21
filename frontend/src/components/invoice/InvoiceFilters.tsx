@@ -12,7 +12,7 @@ interface InvoiceFiltersProps {
     selectedYear: number;
     setSelectedYear: (year: number) => void;
     uniqueHouses: string[];
-    onFilterChange: () => void; // Reset trang về 1 khi lọc
+    onFilterChange: () => void; 
 }
 
 export default function InvoiceFilters({
@@ -34,9 +34,9 @@ export default function InvoiceFilters({
     };
 
     return (
-        <div className="flex flex-col md:flex-row gap-4 bg-white p-4 rounded-lg shadow-sm border items-center justify-between">
+        <div className="flex flex-col xl:flex-row gap-4 bg-white p-4 rounded-lg shadow-sm border items-start xl:items-center justify-between">
             {/* Bộ lọc Trạng thái */}
-            <div className="flex bg-gray-100 p-1 rounded-md overflow-x-auto">
+            <div className="flex bg-gray-100 p-1 rounded-md overflow-x-auto w-full xl:w-auto scrollbar-hide">
                 {[
                     { key: "ALL", label: "Tất cả", activeClass: "text-gray-900", baseClass: "text-gray-500" },
                     { key: "UNPAID", label: "Chưa thanh toán", activeClass: "text-orange-600", baseClass: "text-gray-500" },
@@ -46,7 +46,7 @@ export default function InvoiceFilters({
                         key={item.key}
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         onClick={() => handleStatusChange(item.key as any)}
-                        className={`px-3 py-2 rounded text-sm font-medium transition-colors whitespace-nowrap ${
+                        className={`px-3 py-2 rounded text-sm font-medium transition-colors whitespace-nowrap flex-1 md:flex-none text-center ${
                             statusFilter === item.key 
                             ? `bg-white shadow-sm ${item.activeClass}` 
                             : `${item.baseClass} hover:text-gray-700`
@@ -58,11 +58,11 @@ export default function InvoiceFilters({
             </div>
 
             {/* Các Dropdown select */}
-            <div className="flex gap-2 flex-wrap md:flex-nowrap">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full xl:w-auto">
                 <select 
                     value={selectedHouseName} 
                     onChange={(e) => setSelectedHouseName(e.target.value)} 
-                    className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[150px]"
+                    className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white w-full sm:w-auto min-w-[150px]"
                 >
                     <option value="ALL">Tất cả các Nhà</option>
                     {uniqueHouses.map((name, index) => (<option key={index} value={name}>{name}</option>))}
@@ -74,7 +74,7 @@ export default function InvoiceFilters({
                         setSelectedMonth(e.target.value === "ALL" ? "ALL" : Number(e.target.value));
                         onFilterChange();
                     }}
-                    className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white w-full sm:w-auto"
                 >
                     <option value="ALL">Cả năm</option>
                     {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (<option key={m} value={m}>Tháng {m}</option>))}
@@ -86,7 +86,7 @@ export default function InvoiceFilters({
                         setSelectedYear(Number(e.target.value));
                         onFilterChange();
                     }}
-                    className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white w-full sm:w-auto"
                 >
                     {years.map(y => (<option key={y} value={y}>{y}</option>))}
                 </select>

@@ -8,11 +8,11 @@ import { getHouses, createHouse, updateHouse, deleteHouse } from "@/services/pro
 export default function HousesPage() {
   const [houses, setHouses] = useState<House[]>([]);
   const [loading, setLoading] = useState(true);
-  
+   
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingHouse, setEditingHouse] = useState<House | null>(null);
-  
+   
   const [formData, setFormData] = useState<CreateHouseDto>({ name: "", address: "" });
 
   const [errors, setErrors] = useState<{ name?: string; address?: string }>({});
@@ -128,20 +128,20 @@ export default function HousesPage() {
   };
 
   return (
-    <div className="space-y-6 p-6 bg-gray-50 min-h-screen text-gray-800"> 
-      
+    <div className="space-y-6 p-4 md:p-6 bg-gray-50 min-h-screen text-gray-800"> 
+       
       {/* Header */}
       <div className="flex flex-col gap-6">
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-                <h2 className="text-2xl font-bold text-gray-800">Danh sách Nhà Trọ</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-gray-800">Danh sách Nhà Trọ</h2>
                 <p className="text-gray-500 text-sm">Quản lý các tòa nhà và địa chỉ kinh doanh</p>
             </div>
              <button 
                 onClick={() => { resetForm(); setIsModalOpen(true); }}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-sm font-medium text-sm"
+                className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-sm font-medium text-sm"
             >
-                 + Thêm Nhà Mới
+                  + Thêm Nhà Mới
             </button>
         </div>
       </div>
@@ -157,7 +157,7 @@ export default function HousesPage() {
                   onChange={(e) => setSearchTerm(e.target.value)}
               />
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-500 w-full md:w-auto text-left md:text-right">
               Hiển thị {filteredHouses.length} kết quả
           </div>
       </div>
@@ -168,33 +168,33 @@ export default function HousesPage() {
       ) : (
         <div className="bg-white rounded-lg shadow overflow-hidden">
             <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse min-w-[600px] md:min-w-full">
                     <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
                         <tr>
-                            <th className="p-4 border-b w-16 text-center">STT</th>
-                            <th className="p-4 border-b">Tên Nhà</th>
-                            <th className="p-4 border-b">Địa chỉ</th>
-                            <th className="p-4 border-b text-center">Quản lý</th>
-                            <th className="p-4 border-b text-center">Hành động</th>
+                            <th className="p-3 md:p-4 border-b w-12 md:w-16 text-center whitespace-nowrap">STT</th>
+                            <th className="p-3 md:p-4 border-b whitespace-nowrap">Tên Nhà</th>
+                            <th className="p-3 md:p-4 border-b whitespace-nowrap">Địa chỉ</th>
+                            <th className="p-3 md:p-4 border-b text-center whitespace-nowrap">Quản lý</th>
+                            <th className="p-3 md:p-4 border-b text-center whitespace-nowrap">Hành động</th>
                         </tr>
                     </thead>
                     <tbody className="text-sm divide-y divide-gray-100">
                         {filteredHouses.length > 0 ? filteredHouses.map((house, index) => (
                             <tr key={house.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="p-4 text-center font-mono text-gray-500">{index + 1}</td>
-                                <td className="p-4 font-bold text-gray-800">
+                                <td className="p-3 md:p-4 text-center font-mono text-gray-500">{index + 1}</td>
+                                <td className="p-3 md:p-4 font-bold text-gray-800 whitespace-nowrap">
                                     {house.name}
                                 </td>
-                                <td className="p-4 text-gray-600">{house.address}</td>
-                                <td className="p-4 text-center">
+                                <td className="p-3 md:p-4 text-gray-600 min-w-[200px] whitespace-nowrap">{house.address}</td>
+                                <td className="p-3 md:p-4 text-center whitespace-nowrap">
                                      <Link 
-                                        href={`/owner/rooms?houseId=${house.id}`}
-                                        className="text-blue-600 hover:text-blue-800 text-xs font-semibold bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-md transition"
-                                    >
-                                        Xem danh sách phòng
-                                    </Link>
+                                         href={`/owner/rooms?houseId=${house.id}`}
+                                         className="text-blue-600 hover:text-blue-800 text-xs font-semibold bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-md transition inline-block"
+                                     >
+                                             Xem danh sách phòng
+                                     </Link>
                                 </td>
-                                <td className="p-4 text-center">
+                                <td className="p-3 md:p-4 text-center whitespace-nowrap">
                                     <div className="flex justify-center gap-2">
                                         <button 
                                             onClick={() => handleEdit(house)} 

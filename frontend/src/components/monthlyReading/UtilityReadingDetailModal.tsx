@@ -44,15 +44,15 @@ export default function UtilityReadingDetailModal({ reading, onClose }: UtilityR
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn" 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn p-4" 
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 m-4 animate-slideIn" 
+        className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 animate-slideIn flex flex-col max-h-[90vh]" 
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex justify-between items-center border-b pb-3 mb-4">
+        <div className="flex justify-between items-center border-b pb-3 mb-4 shrink-0">
           <div>
             <h3 className="text-xl font-semibold text-gray-800">Chi tiết Điện/Nước</h3>
             <p className="text-sm text-gray-500">{reading.houseName} - {reading.roomName}</p>
@@ -66,8 +66,8 @@ export default function UtilityReadingDetailModal({ reading, onClose }: UtilityR
         </div>
 
         {/* Content */}
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4 text-center">
+        <div className="space-y-4 overflow-y-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-center">
             {/* Chỉ số Cũ */}
             <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
               <h4 className="font-bold text-gray-500 mb-3 text-sm border-b border-gray-200 pb-1">CHỈ SỐ CŨ</h4>
@@ -100,36 +100,38 @@ export default function UtilityReadingDetailModal({ reading, onClose }: UtilityR
           </div>
 
           {/* Ảnh minh chứng */}
-          <div className="flex gap-4 justify-center pt-2">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
             {reading.electricPhotoUrl && (
-              <div className="text-center">
-                {signedElectricUrl ? (
-                  <Image 
-                    src={signedElectricUrl} 
-                    alt="Đồng hồ Điện" 
-                    width={256} 
-                    height={256} 
-                    className="object-cover border rounded" 
-                  />
-                ) : (
-                  <div className="w-64 h-64 border rounded bg-gray-200 flex items-center justify-center">Loading...</div>
-                )}
+              <div className="text-center w-full">
+                <div className="relative w-full aspect-square bg-gray-200 rounded border overflow-hidden">
+                    {signedElectricUrl ? (
+                    <Image 
+                        src={signedElectricUrl} 
+                        alt="Đồng hồ Điện" 
+                        fill
+                        className="object-cover" 
+                    />
+                    ) : (
+                    <div className="flex items-center justify-center h-full">Loading...</div>
+                    )}
+                </div>
                 <p className="text-sm text-gray-600 mt-1">Đồng hồ Điện</p>
               </div>
             )}
             {reading.waterPhotoUrl && (
-              <div className="text-center">
-                {signedWaterUrl ? (
-                  <Image 
-                    src={signedWaterUrl} 
-                    alt="Đồng hồ Nước" 
-                    width={256} 
-                    height={256} 
-                    className="object-cover border rounded" 
-                  />
-                ) : (
-                  <div className="w-64 h-64 border rounded bg-gray-200 flex items-center justify-center">Loading...</div>
-                )}
+              <div className="text-center w-full">
+                <div className="relative w-full aspect-square bg-gray-200 rounded border overflow-hidden">
+                    {signedWaterUrl ? (
+                    <Image 
+                        src={signedWaterUrl} 
+                        alt="Đồng hồ Nước" 
+                        fill
+                        className="object-cover" 
+                    />
+                    ) : (
+                    <div className="flex items-center justify-center h-full">Loading...</div>
+                    )}
+                </div>
                 <p className="text-sm text-gray-600 mt-1">Đồng hồ Nước</p>
               </div>
             )}
@@ -137,7 +139,7 @@ export default function UtilityReadingDetailModal({ reading, onClose }: UtilityR
         </div>
 
         {/* Footer (Tính toán) */}
-        <div className="mt-6 pt-4 border-t text-sm">
+        <div className="mt-6 pt-4 border-t text-sm shrink-0">
           <p className="flex justify-between font-medium">
             <span>⚡ Điện tiêu thụ:</span>
             <span className="font-bold text-gray-800">{electricUsage > 0 ? electricUsage : 0} kWh</span>
