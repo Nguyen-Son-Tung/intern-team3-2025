@@ -4,5 +4,6 @@ public interface IS3Service
 {
     Task<string> UploadFileAsync(IFormFile file, string folder);
     Task<bool> DeleteFileAsync(string fileUrl);
+    Task<string> GeneratePreSignedUrlAsync(string key, int expirationMinutes = 60);
 }
 

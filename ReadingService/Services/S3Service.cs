@@ -1,5 +1,6 @@
 using Amazon.S3;
 using Amazon.S3.Transfer;
+using Amazon.S3.Model;
 
 namespace ReadingService.Services;
 
@@ -54,6 +55,19 @@ public class S3Service : IS3Service
         {
             return false;
         }
+    }
+
+    public async Task<string> GeneratePreSignedUrlAsync(string key, int expirationMinutes = 60)
+    {
+        var request = new GetPreSignedUrlRequest
+        {
+            BucketName = _bucketName,
+            Key = key,
+            Expires = DateTime.UtcNow.AddMinutes(expirationMinutes),
+            Protocol = Protocol.HTTPS
+        };
+
+        return _s3Client.GetPreSignedURL(request);
     }
 }
 
