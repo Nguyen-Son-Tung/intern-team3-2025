@@ -217,30 +217,30 @@ export default function OwnerUtilitiesPage() {
   };
 
   return (
-    <div className="space-y-6 p-6 bg-gray-50 min-h-screen text-gray-800">
+    <div className="space-y-6 p-4 md:p-6 bg-gray-50 min-h-screen text-gray-800">
       <div className="flex flex-col gap-6">
         {/* Header Title & Manual Button */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Quản lý Chỉ số Điện Nước</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800">Quản lý Chỉ số Điện Nước</h2>
             <p className="text-gray-500 text-sm">
               Thống kê tháng {selectedMonth === "ALL" ? "Tất cả" : selectedMonth}/{selectedYear}
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="relative group flex items-center h-full">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+            <div className="relative group flex items-center justify-center h-full hidden sm:flex">
               <Info className="w-5 h-6 text-gray-500 cursor-pointer hover:text-gray-700 transition" />
-
               <div className="absolute left-1/2 bottom-full transform -translate-x-1/2 mb-2 w-64 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-60">
                 <p>Nếu như tháng này các khách đã được tạo bản nộp chỉ số thì sẽ được bỏ qua.</p>
                 <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-gray-800"></div>
               </div>
             </div>
+            
             <button
               onClick={handleTriggerAutoInvoice}
               disabled={isTriggeringAutoInvoice}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed transition shadow flex items-center gap-2"
+              className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed transition shadow flex items-center justify-center gap-2"
             >
               {isTriggeringAutoInvoice ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -249,7 +249,7 @@ export default function OwnerUtilitiesPage() {
             </button>
             <button
               onClick={openNewCycleModal}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition shadow flex items-center gap-2"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition shadow flex items-center justify-center gap-2"
             >
               Tạo kỳ thu tiền mới
             </button>

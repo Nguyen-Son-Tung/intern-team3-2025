@@ -22,10 +22,10 @@ export default function ContractFilterBar({
   onStatusChange,
 }: Props) {
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border mb-6 flex flex-col md:flex-row gap-4 items-end justify-between">
-      <div className="flex flex-col md:flex-row gap-4 w-full">
+    <div className="bg-white p-4 rounded-lg shadow-sm border mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 items-end">
         {/* Chọn Nhà */}
-        <div className="w-full md:w-64">
+        <div className="w-full">
           <label className="block text-xs font-semibold text-gray-500 mb-1">Nhà trọ</label>
           <select
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
@@ -39,7 +39,7 @@ export default function ContractFilterBar({
         </div>
 
         {/* Tìm kiếm */}
-        <div className="w-full md:w-64">
+        <div className="w-full md:col-span-1 lg:col-span-2">
           <label className="block text-xs font-semibold text-gray-500 mb-1">Tìm kiếm</label>
           <input
             type="text"
@@ -51,7 +51,7 @@ export default function ContractFilterBar({
         </div>
 
         {/* Trạng thái */}
-        <div className="w-full md:w-48">
+        <div className="w-full">
           <label className="block text-xs font-semibold text-gray-500 mb-1">Trạng thái</label>
           <select
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"

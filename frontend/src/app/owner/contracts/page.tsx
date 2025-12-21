@@ -188,16 +188,16 @@ export default function ContractsPage() {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen text-gray-800">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-4 md:p-6 bg-gray-50 min-h-screen text-gray-800">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
-           <h2 className="text-2xl font-bold text-gray-800">Quản lý Hợp Đồng</h2>
+           <h2 className="text-xl md:text-2xl font-bold text-gray-800">Quản lý Hợp Đồng</h2>
            <p className="text-gray-500 text-sm">Theo dõi và tạo mới hợp đồng thuê phòng</p>
         </div>
         {selectedHouseId && (
           <button 
             onClick={() => { setEditingContract(null); setIsModalOpen(true); }} 
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium shadow-sm"
+            className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium shadow-sm transition-colors"
           >
             + Tạo Hợp Đồng
           </button>
@@ -218,7 +218,6 @@ export default function ContractsPage() {
         contracts={filteredData} 
         loading={loading} 
         onEdit={(c) => { setEditingContract(c); setIsModalOpen(true); }}
-        // Thay đổi sự kiện delete: gọi hàm mở modal
         onDelete={handleRequestDelete}
       />
 
@@ -251,7 +250,7 @@ export default function ContractsPage() {
         onConfirm={() => setNotifyModal({ ...notifyModal, isOpen: false })}
         title={notifyModal.title}
         message={notifyModal.message}
-        hideCancel={true} // Chỉ hiện 1 nút Đóng
+        hideCancel={true} 
         confirmText="Đóng"
       />
     </div>

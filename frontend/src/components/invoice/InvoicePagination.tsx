@@ -14,10 +14,11 @@ export default function InvoicePagination({ currentPage, totalPages, totalInvoic
 
     return (
         <div className="flex items-center justify-between bg-white px-4 py-3 border-t border-gray-200">
-            <div className="flex items-center text-sm text-gray-700">
+            <div className="hidden sm:flex items-center text-sm text-gray-700">
                 <span>Hiển thị {((currentPage - 1) * pageSize) + 1} - {Math.min(currentPage * pageSize, totalInvoices)} của {totalInvoices} hóa đơn</span>
             </div>
-            <div className="flex items-center space-x-2">
+            
+            <div className="flex items-center space-x-2 w-full sm:w-auto justify-center sm:justify-end">
                 <button
                     onClick={() => onPageChange(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1 || loading}

@@ -32,13 +32,13 @@ export default function InvoiceStats({ stats, countRemindable, isRemindingAll, o
 
                 <div>
                     <p className="text-gray-500 text-xs uppercase font-semibold">Cần thu</p>
-                    <p className="text-2xl font-bold text-orange-600">{formatCurrency(stats.totalPending)}</p>
+                    <p className="text-2xl font-bold text-orange-600 break-words">{formatCurrency(stats.totalPending)}</p>
                 </div>
                 <button 
                     className="mt-2 text-orange-600 text-xs font-semibold underline disabled:no-underline disabled:text-gray-400 text-left" 
                     disabled={countRemindable === 0 || isRemindingAll}
                 >
-                     {isRemindingAll 
+                      {isRemindingAll 
                         ? "Đang gửi email..." 
                         : (countRemindable > 0 ? `Gửi nhắc thanh toán ${countRemindable} hóa đơn` : "Đã thu hết")
                     }
@@ -48,13 +48,13 @@ export default function InvoiceStats({ stats, countRemindable, isRemindingAll, o
             {/* Thẻ Đã thu */}
             <div className="bg-white p-4 rounded-xl shadow-sm border border-green-100">
                 <p className="text-gray-500 text-xs uppercase font-semibold">Đã thu</p>
-                <p className="text-2xl font-bold text-green-600">{formatCurrency(stats.totalCollected)}</p>
+                <p className="text-2xl font-bold text-green-600 break-words">{formatCurrency(stats.totalCollected)}</p>
             </div>
 
             {/* Thẻ Tổng dự kiến */}
             <div className="bg-white p-4 rounded-xl shadow-sm border border-blue-100">
                 <p className="text-gray-500 text-xs uppercase font-semibold">Tổng doanh thu dự kiến</p>
-                <p className="text-2xl font-bold text-blue-600">{formatCurrency(stats.totalCollected + stats.totalPending)}</p>
+                <p className="text-2xl font-bold text-blue-600 break-words">{formatCurrency(stats.totalCollected + stats.totalPending)}</p>
             </div>
         </div>
     );

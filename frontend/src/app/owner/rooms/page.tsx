@@ -153,28 +153,31 @@ function RoomManager() {
   const renderStatusBadge = (status: RoomStatus) => {
     switch (status) {
       case RoomStatus.Vacant:
-        return <span className="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold">Trống</span>;
+        return <span className="bg-green-100 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap">Trống</span>;
       case RoomStatus.Occupied:
-        return <span className="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-bold">Đang thuê</span>;
+        return <span className="bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap">Đang thuê</span>;
       default:
-        return <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-xs font-bold">Khác</span>;
+        return <span className="bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap">Khác</span>;
     }
   };
 
   return (
-    <div className="space-y-6 p-6 bg-gray-50 min-h-screen text-gray-800">
+    // RESPONSIVE: p-4 trên mobile, p-6 trên desktop
+    <div className="space-y-6 p-4 md:p-6 bg-gray-50 min-h-screen text-gray-800">
       
       {/* --- HEADER SECTION --- */}
       <div className="flex flex-col gap-6">
-        <div className="flex justify-between items-start">
+        {/* RESPONSIVE: Cột trên mobile, hàng trên desktop */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-                <h2 className="text-2xl font-bold text-gray-800">Quản lý Danh sách Phòng</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-gray-800">Quản lý Danh sách Phòng</h2>
                 <p className="text-gray-500 text-sm">Quản lý phòng trọ theo từng tòa nhà</p>
             </div>
             {selectedHouseId && (
               <button 
                   onClick={() => openModal()}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-sm font-medium text-sm"
+                  // RESPONSIVE: Full width trên mobile
+                  className="w-full md:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-sm font-medium text-sm"
               >
                   + Thêm Phòng Mới
               </button>
@@ -183,6 +186,7 @@ function RoomManager() {
 
         {/* --- STATS CARDS --- */}
         {selectedHouseId && (
+          // RESPONSIVE: Grid 1 cột trên mobile, 3 cột trên desktop
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white p-4 rounded-xl shadow-sm border border-blue-100">
                   <p className="text-gray-500 text-xs uppercase font-semibold">TỔNG SỐ PHÒNG</p>
@@ -201,10 +205,11 @@ function RoomManager() {
       </div>
 
       {/* --- TOOLBAR / FILTER --- */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border flex flex-col md:flex-row gap-4 items-end md:items-center justify-between">
-          <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto flex-1">
+      <div className="bg-white p-4 rounded-lg shadow-sm border">
+          {/* RESPONSIVE: Sử dụng Grid để layout các input đẹp hơn trên mọi màn hình */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
               {/* Chọn Nhà */}
-              <div className="w-full md:w-64">
+              <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1">Chọn Nhà trọ</label>
                 <select 
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
@@ -219,7 +224,7 @@ function RoomManager() {
               </div>
 
               {/* Search */}
-              <div className="w-full md:w-64">
+              <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1">Tìm kiếm phòng</label>
                 <input 
                     type="text"
@@ -232,7 +237,7 @@ function RoomManager() {
               </div>
 
               {/* Filter Status */}
-              <div className="w-full md:w-48">
+              <div>
                 <label className="block text-xs font-semibold text-gray-500 mb-1">Trạng thái</label>
                 <select 
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
@@ -257,29 +262,30 @@ function RoomManager() {
         <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div></div>
       ) : (
         <div className="bg-white rounded-lg shadow overflow-hidden">
+            {/* RESPONSIVE: overflow-x-auto để bảng scroll ngang trên mobile */}
             <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse min-w-[600px] md:min-w-full">
                     <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
                         <tr>
-                            <th className="p-4 border-b w-16 text-center">STT</th>
-                            <th className="p-4 border-b">Tên Phòng</th>
-                            <th className="p-4 border-b text-center">Tầng</th>
-                            <th className="p-4 border-b text-center">Trạng thái</th>
-                            <th className="p-4 border-b text-center">Hành động</th>
+                            <th className="p-3 md:p-4 border-b w-12 md:w-16 text-center whitespace-nowrap">STT</th>
+                            <th className="p-3 md:p-4 border-b whitespace-nowrap">Tên Phòng</th>
+                            <th className="p-3 md:p-4 border-b text-center whitespace-nowrap">Tầng</th>
+                            <th className="p-3 md:p-4 border-b text-center whitespace-nowrap">Trạng thái</th>
+                            <th className="p-3 md:p-4 border-b text-center whitespace-nowrap">Hành động</th>
                         </tr>
                     </thead>
                     <tbody className="text-sm divide-y divide-gray-100">
                         {filteredRooms.length > 0 ? filteredRooms.map((room, index) => (
                             <tr key={room.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="p-4 text-center font-mono text-gray-500">{index + 1}</td>
-                                <td className="p-4 font-bold text-gray-800">
+                                <td className="p-3 md:p-4 text-center font-mono text-gray-500">{index + 1}</td>
+                                <td className="p-3 md:p-4 font-bold text-gray-800 whitespace-nowrap">
                                     {room.name}
                                 </td>
-                                <td className="p-4 text-center text-gray-600">{room.floor}</td>
-                                <td className="p-4 text-center">
+                                <td className="p-3 md:p-4 text-center text-gray-600 whitespace-nowrap">{room.floor}</td>
+                                <td className="p-3 md:p-4 text-center whitespace-nowrap">
                                      {renderStatusBadge(room.status)}
                                 </td>
-                                <td className="p-4 text-center">
+                                <td className="p-3 md:p-4 text-center whitespace-nowrap">
                                     <div className="flex justify-center gap-2">
                                         <button 
                                             onClick={() => openModal(room)} 
@@ -312,6 +318,7 @@ function RoomManager() {
       {/* --- MODAL FORM --- */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 transition-all">
+          {/* RESPONSIVE: Width động (w-full max-w-md) */}
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
             <div className="px-6 py-4 border-b bg-gray-50 flex justify-between items-center">
               <h2 className="text-lg font-bold text-gray-800">{editingRoom ? "Cập nhật Phòng" : "Thêm Phòng Mới"}</h2>
@@ -330,7 +337,8 @@ function RoomManager() {
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-4 mb-6">
+              {/* RESPONSIVE: Grid 1 cột trên mobile, 2 cột trên sm */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tầng <span className="text-red-500">*</span></label>
                     <input 

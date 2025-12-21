@@ -18,8 +18,8 @@ export default function TenantReadingDetailModal({ reading, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 m-4 animate-slideIn relative" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 animate-slideIn relative" onClick={(e) => e.stopPropagation()}>
         
         {/* Close Button */}
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl font-light">&times;</button>
@@ -31,7 +31,7 @@ export default function TenantReadingDetailModal({ reading, onClose }: Props) {
         </div>
 
         {/* Body */}
-        <div className="space-y-4">
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto">
             {/* Điện */}
             <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
                 <div className="flex items-center gap-2 mb-2">

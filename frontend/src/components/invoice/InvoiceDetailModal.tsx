@@ -52,9 +52,9 @@ export default function InvoiceDetailModal({ invoice, onClose, role = 'Tenant'}:
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fadeIn">
-      <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-lg flex flex-col max-h-[90vh] animate-slideIn">
+      <div className="bg-white p-6 rounded-xl shadow-lg w-[95%] md:w-full max-w-lg flex flex-col max-h-[90vh] animate-slideIn">
         {/* Header */}
-        <div className="flex justify-between items-center mb-4 pb-2 border-b">
+        <div className="flex justify-between items-center mb-4 pb-2 border-b shrink-0">
           <h3 className="font-bold text-lg text-gray-800">Chi tiết Hóa đơn</h3>
           <button 
             onClick={onClose} 
@@ -65,7 +65,7 @@ export default function InvoiceDetailModal({ invoice, onClose, role = 'Tenant'}:
         </div>
 
         {/* Content thông tin chung */}
-        <div className="bg-gray-50 p-4 rounded-lg mb-6 text-sm text-gray-700 space-y-2 border border-gray-100">
+        <div className="bg-gray-50 p-4 rounded-lg mb-6 text-sm text-gray-700 space-y-2 border border-gray-100 shrink-0">
           <div className="flex justify-between">
             <span className="text-gray-500">Mã HĐ:</span>
             <span className="font-mono font-bold text-gray-900">#{invoice.id}</span>
@@ -131,7 +131,7 @@ export default function InvoiceDetailModal({ invoice, onClose, role = 'Tenant'}:
                     </td>
                     
                     {/* Cột thành tiền */}
-                    <td className="p-3 text-right font-bold text-gray-900 align-top pt-3">
+                    <td className="p-3 text-right font-bold text-gray-900 align-top pt-3 whitespace-nowrap">
                       {formatCurrency(item.amount)}
                     </td>
                   </tr>
@@ -142,7 +142,7 @@ export default function InvoiceDetailModal({ invoice, onClose, role = 'Tenant'}:
         </div>
 
         {/* Tổng cộng */}
-        <div className="mt-2">
+        <div className="mt-2 shrink-0">
             {canPay ? (
               <button 
                 onClick={() => router.push(`/tenant/payment/${invoice.id}`)}

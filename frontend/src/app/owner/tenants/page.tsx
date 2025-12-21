@@ -17,7 +17,7 @@ export default function OwnerTenantsPage() {
     const [tenants, setTenants] = useState<TenantUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    
+     
     // --- STATE MODAL XỬ LÝ (SỬA/XÓA) ---
     const [isDeleting, setIsDeleting] = useState(false);
     const [tenantToDelete, setTenantToDelete] = useState<TenantUser | null>(null);
@@ -74,7 +74,7 @@ export default function OwnerTenantsPage() {
     };
 
     // --- HANDLERS ---
-    
+     
     // Xử lý Xóa
     const handleDeleteClick = (tenant: TenantUser) => setTenantToDelete(tenant);
 
@@ -131,17 +131,20 @@ export default function OwnerTenantsPage() {
     };
 
     return (
-        <div className="space-y-6 p-6 bg-gray-50 min-h-screen text-gray-800">
+        // RESPONSIVE: p-4 trên mobile, p-6 trên desktop
+        <div className="space-y-6 p-4 md:p-6 bg-gray-50 min-h-screen text-gray-800">
             {/* Header */}
+            {/* RESPONSIVE: Stack column trên mobile, row trên desktop */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Quản lý khách thuê</h2>
+                    <h2 className="text-xl md:text-2xl font-bold text-gray-800">Quản lý khách thuê</h2>
                     <p className="text-gray-500 text-sm mt-1">Danh sách tài khoản khách thuê</p>
                 </div>
 
                 <Link 
                     href="/owner/createtenant"
-                    className="bg-blue-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition shadow-sm flex items-center gap-2"
+                    // RESPONSIVE: Full width trên mobile, auto trên desktop
+                    className="w-full md:w-auto bg-blue-600 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition shadow-sm flex items-center justify-center gap-2"
                 >
                     <Plus className="w-5 h-5" />
                     Thêm khách thuê mới
@@ -187,7 +190,7 @@ export default function OwnerTenantsPage() {
                 title={popup.title}
                 message={popup.message}
                 confirmText="Đóng"   
-                hideCancel={true}   
+                hideCancel={true}    
             />
         </div>
     );

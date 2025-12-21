@@ -156,13 +156,13 @@ export default function OwnerInvoicesPage() {
     };
 
     return (
-        <div className="space-y-6 p-6 bg-gray-50 min-h-screen text-gray-800">
+        <div className="space-y-6 p-4 md:p-6 bg-gray-50 min-h-screen text-gray-800">
             <div className="flex flex-col gap-6">
                 
                 {/* --- HEADER --- */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-800">Quản lý hóa đơn</h2>
+                        <h2 className="text-xl md:text-2xl font-bold text-gray-800">Quản lý hóa đơn</h2>
                         <p className="text-gray-500 text-sm">
                             Hóa đơn tháng {selectedMonth === "ALL" ? "Tất cả" : selectedMonth}/{selectedYear}
                         </p>
@@ -171,7 +171,8 @@ export default function OwnerInvoicesPage() {
                     <button
                         onClick={handleTriggerVisibility}
                         disabled={isTriggeringVisibility}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm font-medium text-sm transition-all"
+                        // RESPONSIVE: Full width trên mobile, auto trên desktop
+                        className="w-full md:w-auto justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm font-medium text-sm transition-all"
                     >
                         {isTriggeringVisibility ? (
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
