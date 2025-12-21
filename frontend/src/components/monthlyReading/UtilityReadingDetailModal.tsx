@@ -1,7 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { MonthlyReading } from "@/types/monthlyReading";
+import { Maximize } from "lucide-react";
+
+
 
 interface UtilityReadingDetailModalProps {
   reading: MonthlyReading;
@@ -9,9 +13,34 @@ interface UtilityReadingDetailModalProps {
 }
 
 export default function UtilityReadingDetailModal({ reading, onClose }: UtilityReadingDetailModalProps) {
+  const [signedElectricUrl, setSignedElectricUrl] = useState<string | null>(null);
+  const [signedWaterUrl, setSignedWaterUrl] = useState<string | null>(null);
+
   // Tính toán lượng tiêu thụ
   const electricUsage = (reading.electricNew || 0) - (reading.electricOld || 0);
   const waterUsage = (reading.waterNew || 0) - (reading.waterOld || 0);
+
+  useEffect(() => {
+    const fetchSignedUrl = async (photoUrl: string | undefined, setUrl: (url: string) => void) => {
+      if (!photoUrl) return;
+      try {
+        const url = new URL(photoUrl);
+        const key = url.pathname.slice(1); // Remove leading /
+        const response = await fetch(`${process.env.NEXT_PUBLIC_READING_API_URL}/monthlyreading/signed-url/${key}`);
+        if (response.ok) {
+          const data = await response.json();
+          setUrl(data.signedUrl);
+        } else {
+          console.error('Failed to fetch signed URL');
+        }
+      } catch (error) {
+        console.error('Error fetching signed URL:', error);
+      }
+    };
+
+    fetchSignedUrl(reading.electricPhotoUrl, setSignedElectricUrl);
+    fetchSignedUrl(reading.waterPhotoUrl, setSignedWaterUrl);
+  }, [reading.electricPhotoUrl, reading.waterPhotoUrl]);
 
   return (
     <div 
@@ -71,16 +100,38 @@ export default function UtilityReadingDetailModal({ reading, onClose }: UtilityR
           </div>
 
           {/* Ảnh minh chứng */}
-          <div className="flex gap-4 justify-center text-sm text-blue-600 underline cursor-pointer pt-2">
+          <div className="flex gap-4 justify-center pt-2">
             {reading.electricPhotoUrl && (
-              <a href={reading.electricPhotoUrl} target="_blank" rel="noopener noreferrer" className="hover:text-blue-800">
-                Xem ảnh đồng hồ Điện
-              </a>
+              <div className="text-center">
+                {signedElectricUrl ? (
+                  <Image 
+                    src={signedElectricUrl} 
+                    alt="Đồng hồ Điện" 
+                    width={256} 
+                    height={256} 
+                    className="object-cover border rounded" 
+                  />
+                ) : (
+                  <div className="w-64 h-64 border rounded bg-gray-200 flex items-center justify-center">Loading...</div>
+                )}
+                <p className="text-sm text-gray-600 mt-1">Đồng hồ Điện</p>
+              </div>
             )}
             {reading.waterPhotoUrl && (
-              <a href={reading.waterPhotoUrl} target="_blank" rel="noopener noreferrer" className="hover:text-blue-800">
-                Xem ảnh đồng hồ Nước
-              </a>
+              <div className="text-center">
+                {signedWaterUrl ? (
+                  <Image 
+                    src={signedWaterUrl} 
+                    alt="Đồng hồ Nước" 
+                    width={256} 
+                    height={256} 
+                    className="object-cover border rounded" 
+                  />
+                ) : (
+                  <div className="w-64 h-64 border rounded bg-gray-200 flex items-center justify-center">Loading...</div>
+                )}
+                <p className="text-sm text-gray-600 mt-1">Đồng hồ Nước</p>
+              </div>
             )}
           </div>
         </div>

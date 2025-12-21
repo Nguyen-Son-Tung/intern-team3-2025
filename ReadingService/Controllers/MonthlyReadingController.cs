@@ -30,6 +30,7 @@ public class MonthlyReadingController : ControllerBase
     private readonly IMessageProducer _producer;
     private readonly IUserService _userService;
     private readonly IPropertyService _propertyService;
+    private readonly IS3Service _s3Service;
     public MonthlyReadingController(
         IMonthlyReadingService monthlyReadingService,
         IReadingCycleService readingCycleService,
@@ -38,7 +39,8 @@ public class MonthlyReadingController : ControllerBase
         IConfiguration config,
         IMessageProducer producer,
         IUserService userService,
-        IPropertyService propertyService)
+        IPropertyService propertyService,
+        IS3Service s3Service)
     {
         _monthlyReadingService = monthlyReadingService;
         _readingCycleService = readingCycleService;
@@ -48,6 +50,7 @@ public class MonthlyReadingController : ControllerBase
         _producer = producer;
         _userService = userService;
         _propertyService = propertyService;
+        _s3Service = s3Service;
     }
 
     /// <summary>
@@ -596,6 +599,21 @@ public class MonthlyReadingController : ControllerBase
         {
             _logger.LogError(ex, "Error triggering auto invoice");
             return StatusCode(500, new { message = "Error triggering auto invoice", error = ex.Message });
+        }
+    }
+
+    [HttpGet("signed-url/{*key}")]
+    public async Task<IActionResult> GetSignedUrl(string key)
+    {
+        try
+        {
+            var signedUrl = await _s3Service.GeneratePreSignedUrlAsync(key);
+            return Ok(new { signedUrl });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating signed URL for key: {Key}", key);
+            return StatusCode(500, new { message = "Error generating signed URL", error = ex.Message });
         }
     }
 }
